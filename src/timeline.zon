@@ -1,0 +1,52 @@
+.{
+    .tags = .{
+        .{ .name = "comp_naive", .duration = 100, .t = .seq },
+        .{ .name = "comp_2pass_separable", .duration = 100, .t = .seq },
+        .{ .name = "comp_2pass_separable_cache", .duration = 100, .t = .seq },
+        .{ .name = "comp_1pass_separable_cache", .duration = 100, .t = .seq },
+        .{ .name = "frag_naive", .duration = 100, .t = .seq },
+        .{ .name = "frag_2pass_separable", .duration = 100, .t = .seq },
+        .{ .name = "frag_dual_kawase", .duration = 100, .t = .seq },
+    },
+    .text = .{
+        .fonts = .{.{
+            .file = "Unitblock.ttf",
+            .size = 32,
+            .padding_em = 0.1,
+        }},
+        .track = .{
+            // FPS
+            .{
+                .text = .{ .ref = .fps },
+                .pos = .{ -0.99, 0.99 },
+                .scale = 0.03,
+            },
+            // Time
+            .{
+                .text = .{ .ref = .time },
+                .pos = .{ -0.99, -0.99 },
+                .origin = .bottom_left,
+                .scale = 0.03,
+            },
+        },
+    },
+    .camera = .{
+        .control = .{
+            .{ .i = 0, .t = .{ .abs = 0 } },
+        },
+        .tracks = .{
+            .{ // TRACK 0
+                .{
+                    .t = .{ .abs = 0 },
+                    .entry = .{ .pos = .{ 0, 0, 6 }, .target = .{ 0, 0, 0 }, .fov = 90 },
+                    .motion = .{},
+                },
+            },
+        },
+        .effects = .{
+            .{
+                .motion = .{ .shake = .{} },
+            },
+        },
+    },
+}
