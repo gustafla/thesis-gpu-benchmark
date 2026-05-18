@@ -73,8 +73,8 @@ zig build -Doptimize=ReleaseFast benchmark
 
 ## CSV Data Schema
 
-When executing `zig build benchmark`, the stdout streams are captured and routed straight into separate files
-matching their **tag** identities inside `zig-out/bin/[tag_name].csv`.
+When executing `zig build benchmark`, the stdout streams are captured into separate files
+matching their **tag** identities inside `zig-out/results/[tag].csv`.
 
 The CSV data format tracks the GPU pass execution timeline. It uses the following schema:
 

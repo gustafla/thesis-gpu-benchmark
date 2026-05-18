@@ -77,8 +77,8 @@ pub fn build(b: *std.Build) void {
         const csv_output = run_step.captureStdOut(.{});
 
         // Install the captured CSV into zig-out/bin/
-        const filename = b.fmt("{s}.csv", .{tag.name});
-        const install_csv = b.addInstallBinFile(csv_output, filename);
+        const filename = b.fmt("results/{s}.csv", .{tag.name});
+        const install_csv = b.addInstallFile(csv_output, filename);
 
         // Ensure the install step happens after the run step
         install_csv.step.dependOn(&run_step.step);
