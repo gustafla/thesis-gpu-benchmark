@@ -1,15 +1,15 @@
 # Blur Filter Benchmark Suite
 
-This project is a benchmark suite built on a custom [SDL3 GPU engine](https://github.com/gustafla/mehustin2).
-It utilizes the Zig build system and injects an instrumented [GPU profiling fork of SDL3](https://github.com/gustafla/thesis-SDL)
+This project is a shader benchmark suite built on a custom [SDL3 GPU engine](https://github.com/gustafla/mehustin2).
+It utilizes the Zig build system and injects a custom [GPU profiling fork of SDL3](https://github.com/gustafla/thesis-SDL)
 into the engine's dependency tree.
 
-The framework provides per-pass GPU microsecond-precision timing data, allowing for analysis of various blur filter
-implementations (e.g., Gaussian Convolution, Dual Kawase) across Vulkan compute and graphics pipelines.
+The benchmark provides per-pass GPU microsecond-precision timing data, allowing for analysis of various blur filter
+implementations (e.g., naive gaussian convolution, Dual Kawase) across Vulkan compute and graphics pipelines.
 
 ## Prerequisites
 
-To successfully build this benchmarking suite, your local development environment must be set up with the engine and tools.
+To successfully compile and run this benchmark, your local development environment must be set up with the engine and tools.
 
 ### Directory Layout
 Currently, this project relies on a relative local path to resolve the engine dependency.
@@ -23,7 +23,7 @@ cd .. && git clone https://github.com/gustafla/mehustin2 && cd -
 ├── 📁 thesis-gpu-benchmark/  <-- You are here (Current Project Root)
 │   ├── 📄 build.zig
 │   └── 📄 build.zig.zon
-└── 📁 mehustin2/             <-- Engine Subsystem Source Tree
+└── 📁 mehustin2/             <-- Engine Source Tree
     ├── 📄 build.zig
     └── 📄 build.zig.zon
 ```
