@@ -41,7 +41,7 @@ Before executing `zig build`, ensure the following dependencies are installed an
     # Run the compiler from anywhere
     ~/zig-$(uname -m)-linux-0.16.0/zig zen
     ```
-* Google Shaderc (`glslc`): The pipeline requires this to compile the GLSL source files into binary SPIR-V bytecode.
+* Google Shaderc (`glslc`): The build process requires shaderc to compile the GLSL source files into SPIR-V binaries.
   * Arch Linux / CachyOS: `sudo pacman -S shaderc`
   * Ubuntu / Debian: `sudo apt install shaderc`
 * Check the engine [README](https://github.com/gustafla/mehustin2) if missing dependencies are encountered.
@@ -49,16 +49,16 @@ Before executing `zig build`, ensure the following dependencies are installed an
 ## Execution and Build Commands
 
 The custom [`build.zig`](build.zig) handles compiling shaders and directing benchmark runs.
-* *Run the demo:* `zig build run` -- Compiles and spins up the interactive testing.
+* **Run the demo:** `zig build run` -- Compiles and spins up the interactive testing.
   See the [engine README](https://github.com/gustafla/mehustin2) file for usage.
-* *Run automated benchmarks:* `zig build benchmark` --
+* **Run automated benchmarks:** `zig build benchmark` --
   Directs a fully automated, serialized profiling routine.
-  It parses src/timeline.zon at runtime and generates precise GPU timing data.
+  It parses `src/timeline.zon` and generates precise GPU timing data per each **tag** on the `timeline`.
   By default, it profiles each **tag** configuration for 10 seconds.
   You can override the testing duration directly from the command line interface:
   ```bash
   # Run every configured variant sequentially for 30 seconds each
-  zig build benchmark -- 30
+  zig build benchmark -Doptimize=ReleaseFast -- 30
   ```
 
 ## Build Options
