@@ -19,10 +19,8 @@ pub fn build(b: *std.Build) void {
         const patched_sdl_lib = patched_sdl_dep.artifact("SDL3");
         for (engine_dep.module("engine").link_objects.items) |*object| {
             switch (object.*) {
-                .other_step => |ostep| {
-                    if (std.mem.eql(u8, ostep.name, "SDL3")) {
-                        object.* = .{ .other_step = patched_sdl_lib };
-                    }
+                .other_step => |step| if (std.mem.eql(u8, step.name, "SDL3")) {
+                    object.* = .{ .other_step = patched_sdl_lib };
                 },
                 else => {},
             }
@@ -45,4 +43,46 @@ pub fn build(b: *std.Build) void {
 
     // Install the build artifacts
     engine.install(b, engine_dep, options);
+
+    // Get the main executable
+    const exe = engine_dep.artifact(options.exe_name);
+
+    // Load and parse timeline.zon at runtime
+    const timeline = engine.parseZon(struct {
+        tags: []const struct { name: []const u8 },
+    }, b, "src/timeline.zon");
+
+    const benchmark_step = b.step("benchmark", "Run all benchmarks");
+
+    var seconds: []const u8 = "10";
+    if (b.args) |args| seconds = args[0];
+    var prev_step: ?*std.Build.Step = null;
+
+    for (timeline.tags) |tag| {
+        const run_step = b.addRunArtifact(exe);
+        run_step.step.dependOn(b.getInstallStep());
+        run_step.has_side_effects = true;
+        run_step.setCwd(.{ .cwd_relative = b.exe_dir });
+        run_step.addArgs(&.{
+            "--tags-override",     tag.name,
+            "--duration-override", seconds,
+        });
+
+        // Force sequential execution
+        if (prev_step) |p| {
+            run_step.step.dependOn(p);
+        }
+
+        // Capture CSV data
+        const csv_output = run_step.captureStdOut(.{});
+
+        // Install the captured CSV into zig-out/bin/
+        const filename = b.fmt("{s}.csv", .{tag.name});
+        const install_csv = b.addInstallBinFile(csv_output, filename);
+
+        // Ensure the install step happens after the run step
+        install_csv.step.dependOn(&run_step.step);
+        benchmark_step.dependOn(&install_csv.step);
+        prev_step = &run_step.step;
+    }
 }
