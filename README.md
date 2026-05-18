@@ -31,7 +31,7 @@ cd .. && git clone https://github.com/gustafla/mehustin2 && cd -
 ### System Toolchain Requirements
 
 Before executing `zig build`, ensure the following dependencies are installed and available in your system's PATH:
-* **Zig Compiler v0.16.x:** Building with an older zig version will result in build errors.
+* **Zig Compiler v0.16.0:** Building with an older zig version will result in build errors. A more recent version might work.
   * Arch Linux / CachyOS: `sudo pacman -S zig`
   * Other Linux OS: Download from [ziglang.org](https://ziglang.org/download/#release-0.16.0):
     ```bash
