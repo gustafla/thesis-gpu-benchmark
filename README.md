@@ -24,8 +24,8 @@ cd .. && git clone https://github.com/gustafla/mehustin2 && cd -
 │   ├── 📄 build.zig
 │   └── 📄 build.zig.zon
 └── 📁 mehustin2/         <-- Engine Subsystem Source Tree
-├── 📄 build.zig
-└── 📄 build.zig.zon
+    ├── 📄 build.zig
+    └── 📄 build.zig.zon
 ```
 
 ### System Toolchain Requirements
