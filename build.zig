@@ -49,13 +49,13 @@ pub fn build(b: *std.Build) void {
 
     // Load and parse timeline.zon at runtime
     const timeline = engine.parseZon(struct {
-        tags: []const struct { name: []const u8 },
+        tags: []const struct { name: []const u8, duration: f32 },
     }, b, "src/timeline.zon");
 
     const benchmark_step = b.step("benchmark", "Run all benchmarks");
 
-    var seconds: []const u8 = "10";
-    if (b.args) |args| seconds = args[0];
+    var duration_arg: ?[]const u8 = null;
+    if (b.args) |args| duration_arg = args[0];
     var prev_step: ?*std.Build.Step = null;
 
     for (timeline.tags) |tag| {
@@ -65,7 +65,7 @@ pub fn build(b: *std.Build) void {
         run_step.setCwd(.{ .cwd_relative = b.exe_dir });
         run_step.addArgs(&.{
             "--tags-override",     tag.name,
-            "--duration-override", seconds,
+            "--duration-override", duration_arg orelse b.fmt("{}", .{tag.duration}),
         });
 
         // Force sequential execution

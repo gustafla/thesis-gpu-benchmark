@@ -103,9 +103,9 @@ It specifies the sequence of unique variant workloads targeted by the benchmarki
 ```zig
 .{
     .tags = .{
-        .{ .name = "comp_naive", .duration = 100, .t = .seq },
-        .{ .name = "comp_2pass_separable", .duration = 100, .t = .seq },
-        .{ .name = "comp_2pass_separable_cache", .duration = 100, .t = .seq },
+        .{ .name = "comp_naive", .duration = 10, .t = .seq },
+        .{ .name = "comp_2pass_separable", .duration = 10, .t = .seq },
+        .{ .name = "comp_2pass_separable_cache", .duration = 10, .t = .seq },
         // ...
     },
 }
