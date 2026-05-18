@@ -9,7 +9,7 @@ implementations (e.g., Gaussian Convolution, Dual Kawase) across Vulkan compute 
 
 ## Prerequisites
 
-To successfully build this benchmarking suite, your local development environment must set up with the engine and tools.
+To successfully build this benchmarking suite, your local development environment must be set up with the engine and tools.
 
 ### Directory Layout
 Currently, this project relies on a relative local path to resolve the engine dependency.
@@ -20,10 +20,10 @@ cd .. && git clone https://github.com/gustafla/mehustin2 && cd -
 
 ```
 📁 my_thesis_workspace/
-├── 📁 thesis-benchmark/  <-- You are here (Current Project Root)
+├── 📁 thesis-gpu-benchmark/  <-- You are here (Current Project Root)
 │   ├── 📄 build.zig
 │   └── 📄 build.zig.zon
-└── 📁 mehustin2/         <-- Engine Subsystem Source Tree
+└── 📁 mehustin2/             <-- Engine Subsystem Source Tree
     ├── 📄 build.zig
     └── 📄 build.zig.zon
 ```
@@ -31,7 +31,7 @@ cd .. && git clone https://github.com/gustafla/mehustin2 && cd -
 ### System Toolchain Requirements
 
 Before executing `zig build`, ensure the following dependencies are installed and available in your system's PATH:
-* Zig Compiler (v0.16.x): Building with older toolchains (such as 0.14 or 0.15) will result in build errors.
+* **Zig Compiler (v0.16.x):** Building with older toolchains (such as 0.14 or 0.15) will result in build errors.
   * Arch Linux / CachyOS: `sudo pacman -S zig`
   * Other Linux OS: Download from [ziglang.org](https://ziglang.org/download/#release-0.16.0):
     ```bash
@@ -41,7 +41,7 @@ Before executing `zig build`, ensure the following dependencies are installed an
     # Run the compiler from anywhere
     ~/zig-$(uname -m)-linux-0.16.0/zig zen
     ```
-* Google Shaderc (`glslc`): The build process requires shaderc to compile the GLSL source files into SPIR-V binaries.
+* **Google Shaderc (`glslc`):** The build process requires shaderc to compile the GLSL source files into SPIR-V binaries.
   * Arch Linux / CachyOS: `sudo pacman -S shaderc`
   * Ubuntu / Debian: `sudo apt install shaderc`
 * Check the engine [README](https://github.com/gustafla/mehustin2) if missing dependencies are encountered.
@@ -58,7 +58,7 @@ The custom [`build.zig`](build.zig) handles compiling shaders and directing benc
   You can override the testing duration directly from the command line interface:
   ```bash
   # Run every configured variant sequentially for 30 seconds each
-  zig build benchmark -Doptimize=ReleaseFast -- 30
+  zig build -Doptimize=ReleaseFast benchmark -- 30
   ```
 
 ## Build Options
