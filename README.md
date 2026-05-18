@@ -81,7 +81,7 @@ The CSV data format tracks the GPU pass execution timeline. It uses the followin
 | Column Index | Field Name | Data Type | Description |
 | :--- | :--- | :--- | :--- |
 | **0** | `FrameCounter` | `integer` | Identifies frames (0 or 1, by default). |
-| **1** | `PassIndex` | `integer` | Sequential index to the **tag**-culled `src/render.zon` pass list. [See below](#src-render-zon). |
+| **1** | `PassIndex` | `integer` | Sequential index to the **tag**-culled `src/render.zon` pass list. [See below](#srcrenderzon). |
 | **2** | `TimestampPeriod` | `float` | Hardware scale factor (nanoseconds per tick) copied from device limits. |
 | **3** | `StartTicks` | `uint64` | Raw counter ticks at the start of pass execution on the GPU. |
 | **4** | `EndTicks` | `uint64` | Raw counter ticks at the end of pass execution on the GPU. |
