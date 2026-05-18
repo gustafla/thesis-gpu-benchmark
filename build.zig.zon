@@ -7,7 +7,8 @@
             .path = "../mehustin2",
         },
         .sdl = .{
-            .path = "../thesis-SDL",
+            .url = "git+https://github.com/gustafla/thesis-SDL#5b1b79ca08b591ecc2bb9071bd86de4b4af0ff26",
+            .hash = "sdl-0.5.0+3.4.8-HgKE1MsUpgEr91NotSTvxLXKJW6eG95vHWunv-Vsdcm1",
         },
     },
     .paths = .{
