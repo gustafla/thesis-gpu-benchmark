@@ -54,18 +54,24 @@ pub fn build(b: *std.Build) void {
 
     const benchmark_step = b.step("benchmark", "Run all benchmarks");
 
-    var duration_arg: ?[]const u8 = null;
-    if (b.args) |args| duration_arg = args[0];
+    var arg_duration: ?[]const u8 = null;
+    if (b.args) |args| arg_duration = args[0];
+
     var prev_step: ?*std.Build.Step = null;
 
     for (timeline.tags) |tag| {
         const run_step = b.addRunArtifact(exe);
+        const tag_duration = b.fmt("{}", .{tag.duration});
         run_step.step.dependOn(b.getInstallStep());
         run_step.has_side_effects = true;
         run_step.setCwd(.{ .cwd_relative = b.exe_dir });
         run_step.addArgs(&.{
             "--tags-override",     tag.name,
-            "--duration-override", duration_arg orelse b.fmt("{}", .{tag.duration}),
+            "--duration-override",
+            if (std.mem.eql(u8, tag.name, "warmup"))
+                tag_duration
+            else
+                arg_duration orelse tag_duration,
         });
 
         // Force sequential execution
