@@ -7,32 +7,26 @@ into the engine's dependency tree.
 The benchmark provides per-pass GPU microsecond-precision timing data, allowing for analysis of various blur filter
 implementations (e.g., naive gaussian convolution, Dual Kawase) across Vulkan compute and graphics pipelines.
 
+## Directory Layout
+```
+📁 thesis-gpu-benchmark/  <-- You are here
+├── 📁 zig-out/
+│   ├── 📁 bin/           <-- Output binaries are generated here
+│   └── 📁 results/       <-- Output CSVs are generated here
+├── 📁 shaders/
+│   └── 📄 bloom.glsl     <-- Blur filter implementations (multiple shaders)
+├── 📁 src/
+│   └── 📄 config.zon
+│   └── 📄 timeline.zon
+│   └── 📄 render.zon
+├── 📄 build.zig
+└── 📄 build.zig.zon
+```
+
 ## Prerequisites
 
-To successfully compile and run this benchmark, your local development environment must be set up with the engine and tools.
+To successfully compile this benchmark, ensure the following dependencies are installed and available in your system's PATH:
 
-### Directory Layout
-Currently, this project relies on a relative local path to resolve the engine dependency.
-Clone the engine repository directly into a sibling directory named `mehustin2` relative to this project root:
-```bash
-cd .. && git clone https://github.com/gustafla/mehustin2 && cd -
-```
-
-```
-📁 my_thesis_workspace/
-├── 📁 thesis-gpu-benchmark/  <-- You are here (Current Project Root)
-│   ├── 📁 zig-out/
-│   │   └── 📁 results/       <-- Output CSVs are generated here
-│   ├── 📄 build.zig
-│   └── 📄 build.zig.zon
-└── 📁 mehustin2/             <-- Engine Source Tree
-    ├── 📄 build.zig
-    └── 📄 build.zig.zon
-```
-
-### System Toolchain Requirements
-
-Before executing `zig build`, ensure the following dependencies are installed and available in your system's PATH:
 * **Zig Compiler v0.16.0:** Building with an older zig version will result in build errors. Conversely, a more recent (e.g. nightly) version may work, but isn't recommended.
   * Arch Linux / CachyOS: `sudo pacman -S zig`
   * Other Linux OS: Download from [ziglang.org](https://ziglang.org/download/#release-0.16.0):
@@ -51,6 +45,7 @@ Before executing `zig build`, ensure the following dependencies are installed an
 ## Execution and Build Commands
 
 The custom [`build.zig`](build.zig) handles compiling shaders and directing benchmark runs.
+* **Compile:** `zig build -Doptimize=ReleaseFast` -- Outputs binaries to `zig-out`.
 * **Run the demo:** `zig build run` -- Compiles and spins up the interactive testing.
   See the [engine README](https://github.com/gustafla/mehustin2) file for usage.
 * **Run automated benchmarks:** `zig build benchmark` --
@@ -63,6 +58,31 @@ The custom [`build.zig`](build.zig) handles compiling shaders and directing benc
   zig build -Doptimize=ReleaseFast benchmark -- 30 2
   ```
 
+### Using the Built Binaries
+
+This subsection documents the binaries emitted by `zig build`.
+If you intend to run the benchmark on the build host, you can ignore this subsection and just use the `zig build` commands documented above.
+
+The `benchmark` binary requires two positional arguments and additionally has two optional arguments.
+1. Demo binary path (relative or absolute).
+2. CSV results output path (relative or absolute).
+3. Run duration (in seconds, default = 10).
+4. Warm-up duration override (in seconds, default = 5).
+```bash
+cd zig-out/bin
+# Run the benchmark for 30 seconds with a 2 second warm-up, output CSVs to /mnt/results
+./benchmark demo /mnt/results 30 2
+```
+
+The `demo` binary has two two optional flags.
+* `--tags-override [tag1,...]`: Fix the set of runtime tags to a comma-separated list, ignore the [timeline](#srctimelinezon).
+* `--duration-override [seconds]`: Quit after running for `seconds`, ignore the [timeline](#srctimelinezon).
+```bash
+cd zig-out/bin
+# Run the demo for 30 seconds, output CSV to stdout
+./demo --duration-override 30
+```
+
 ## Build Options
 
 To query the full list of build options, run `zig build --help`.
@@ -71,6 +91,16 @@ For accurate results, never benchmark with a debug binary.
 Use `-Doptimize`:
 ```bash
 zig build -Doptimize=ReleaseFast benchmark
+```
+
+By default, the target architecture is the host CPU and its feature set.
+To build for another architecture, such as generic x86_64, use `-Dtarget`:
+```bash
+# Generic x86_64
+zig build -Doptimize=ReleaseFast -Dtarget=x86_64-linux-gnu
+
+# Generic aarch64
+zig build -Doptimize=ReleaseFast -Dtarget=aarch64-linux-gnu
 ```
 
 ## CSV Data Schema

@@ -3,12 +3,13 @@
     .version = "0.0.1",
     .minimum_zig_version = "0.16.0",
     .dependencies = .{
-        .mehustin2 = .{
-            .path = "../mehustin2",
-        },
         .sdl = .{
             .url = "git+https://github.com/gustafla/thesis-SDL#a3cded8382012ca6d3c2fb356b6d38471880ad1e",
             .hash = "sdl-0.5.0+3.4.8-HgKE1LoUpgHfsdzP-09Ky5sQcu2EVkLIWbWUoYaKrrRn",
+        },
+        .mehustin2 = .{
+            .url = "git+https://github.com/gustafla/mehustin2#cb0a924315bf89d9d30e7a1ef8a423f6210a11d1",
+            .hash = "mehustin2-0.15.0-0-24ORaJBABucmpQLtDfEmvTFE1cZhYhNI4u1Hq_D5LS",
         },
     },
     .paths = .{
