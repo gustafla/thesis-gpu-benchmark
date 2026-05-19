@@ -21,6 +21,8 @@ cd .. && git clone https://github.com/gustafla/mehustin2 && cd -
 ```
 📁 my_thesis_workspace/
 ├── 📁 thesis-gpu-benchmark/  <-- You are here (Current Project Root)
+│   ├── 📁 zig-out/
+│   │   └── 📁 results/       <-- Output CSVs are generated here
 │   ├── 📄 build.zig
 │   └── 📄 build.zig.zon
 └── 📁 mehustin2/             <-- Engine Source Tree
@@ -53,12 +55,12 @@ The custom [`build.zig`](build.zig) handles compiling shaders and directing benc
   See the [engine README](https://github.com/gustafla/mehustin2) file for usage.
 * **Run automated benchmarks:** `zig build benchmark` --
   Directs a fully automated, serialized profiling routine.
-  It parses `src/timeline.zon` and generates precise GPU timing data per each **tag** on the `timeline`.
-  By default, it profiles each **tag** configuration for 10 seconds.
+  It generates precise GPU timing data per each **tag** on the [`timeline`](#srctimelinezon).
+  By default, it profiles each **tag** configuration for 10 seconds, with a 5 second warm-up period.
   You can override the testing duration directly from the command line interface:
   ```bash
-  # Run every configured variant sequentially for 30 seconds each
-  zig build -Doptimize=ReleaseFast benchmark -- 30
+  # Run every configured variant sequentially for 30 seconds, with a 2 second warm-up
+  zig build -Doptimize=ReleaseFast benchmark -- 30 2
   ```
 
 ## Build Options
@@ -86,8 +88,8 @@ The CSV data uses the following schema:
 | **3** | `DurationNanos` | `float` | Pass start to end duration in nanoseconds. |
 
 The initial rows contain per-run constants in comments, formatted `# [Field]: [value]`:
-* `# WarmupDuration`: The run warm-up time nanoseconds.
-* `# WarmupRows`: The number of initial data rows that are warming up the GPU. **Ignore** this many initial rows.
+* `# WarmupDuration`: The total warm-up duration in nanoseconds.
+* `# WarmupRows`: The number of initial data rows that are warming up the GPU. **Ignore** this number of initial rows.
 * `# TimestampPeriod`: The GPU counter tick period in nanoseconds.
 
 ## Project Configuration Layout

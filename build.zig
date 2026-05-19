@@ -44,51 +44,27 @@ pub fn build(b: *std.Build) !void {
     // Install the build artifacts
     engine.install(b, engine_dep, options);
 
-    // Get the main executable
-    const exe = engine_dep.artifact(options.exe_name);
+    // Benchmark runner binary
+    const benchmark_mod = b.createModule(.{
+        .root_source_file = b.path("src/benchmark.zig"),
+        .target = options.target,
+        .optimize = options.optimize,
+    });
+    const benchmark_exe = b.addExecutable(.{
+        .name = "benchmark",
+        .root_module = benchmark_mod,
+    });
+    b.installArtifact(benchmark_exe);
 
-    // Load and parse timeline.zon at runtime
-    const timeline = engine.parseZon(struct {
-        tags: []const struct { name: []const u8, duration: f32 },
-    }, b, "src/timeline.zon");
+    // Benchmark runner run step
+    const benchmark_run = b.addRunArtifact(benchmark_exe);
+    benchmark_run.setCwd(.{ .cwd_relative = b.exe_dir });
+    benchmark_run.step.dependOn(b.getInstallStep());
+    benchmark_run.addArg(b.getInstallPath(.bin, options.exe_name));
+    benchmark_run.addArg(b.getInstallPath(.{ .custom = "results" }, ""));
+    if (b.args) |args| benchmark_run.addArgs(args);
 
+    // Top level benchmark step
     const benchmark_step = b.step("benchmark", "Run all benchmarks");
-
-    var warmup: f32 = 5;
-    var duration: ?f32 = null;
-    if (b.args) |args| {
-        if (args.len > 0) duration = try std.fmt.parseFloat(f32, args[0]);
-        if (args.len > 1) warmup = try std.fmt.parseFloat(f32, args[1]);
-    }
-
-    var prev_step: ?*std.Build.Step = null;
-
-    for (timeline.tags) |tag| {
-        const run_step = b.addRunArtifact(exe);
-        const run_duration = b.fmt("{}", .{(duration orelse tag.duration) + warmup});
-        run_step.step.dependOn(b.getInstallStep());
-        run_step.has_side_effects = true;
-        run_step.setCwd(.{ .cwd_relative = b.exe_dir });
-        run_step.addArgs(&.{
-            "--tags-override",     tag.name,
-            "--duration-override", run_duration,
-        });
-
-        // Force sequential execution
-        if (prev_step) |p| {
-            run_step.step.dependOn(p);
-        }
-
-        // Capture CSV data
-        const csv_output = run_step.captureStdOut(.{});
-
-        // Install the captured CSV into zig-out/bin/
-        const filename = b.fmt("results/{s}.csv", .{tag.name});
-        const install_csv = b.addInstallFile(csv_output, filename);
-
-        // Ensure the install step happens after the run step
-        install_csv.step.dependOn(&run_step.step);
-        benchmark_step.dependOn(&install_csv.step);
-        prev_step = &run_step.step;
-    }
+    benchmark_step.dependOn(&benchmark_run.step);
 }
