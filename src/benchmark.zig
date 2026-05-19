@@ -86,5 +86,7 @@ pub fn main(init: std.process.Init) !void {
         ) catch return file_writer.err.?;
         file_writer.interface.writeAll(run.stdout) catch return file_writer.err.?;
         file_writer.interface.flush() catch return file_writer.err.?;
+
+        _ = init.arena.reset(.retain_capacity);
     }
 }
