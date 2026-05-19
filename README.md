@@ -45,10 +45,10 @@ To successfully compile this benchmark, ensure the following dependencies are in
 ## Execution and Build Commands
 
 The custom [`build.zig`](build.zig) handles compiling shaders and directing benchmark runs.
-* **Compile:** `zig build -Doptimize=ReleaseFast` -- Outputs binaries to `zig-out`.
-* **Run the demo:** `zig build run` -- Compiles and spins up the interactive testing.
+* **Compile:** `zig build -Doptimize=ReleaseFast` - Outputs binaries to `zig-out`.
+* **Run the demo:** `zig build run` - Compiles and spins up the interactive testing.
   See the [engine README](https://github.com/gustafla/mehustin2) file for usage.
-* **Run automated benchmarks:** `zig build benchmark` --
+* **Run automated benchmarks:** `zig build benchmark` -
   Directs a fully automated, serialized profiling routine.
   It generates precise GPU timing data per each **tag** on the [`timeline`](#srctimelinezon).
   By default, it profiles each **tag** configuration for 10 seconds, with a 5 second warm-up period.
