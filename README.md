@@ -4,8 +4,8 @@ This project is a shader benchmark suite built on a custom [SDL3 GPU engine](htt
 It utilizes the Zig build system and injects a custom [GPU profiling fork of SDL3](https://github.com/gustafla/thesis-SDL)
 into the engine's dependency tree.
 
-The benchmark provides per-pass GPU microsecond-precision timing data, allowing for analysis of various blur filter
-implementations (e.g., naive gaussian convolution, Dual Kawase) across Vulkan compute and graphics pipelines.
+The benchmark provides per-pass GPU microsecond-precision timing data, allowing for analysis of various real-time blur filter
+implementations across Vulkan compute and graphics pipelines.
 
 ## Directory Layout
 ```
