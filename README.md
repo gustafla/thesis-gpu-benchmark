@@ -64,14 +64,14 @@ This subsection documents the binaries emitted by `zig build`.
 If you intend to run the benchmark on the build host, you can ignore this subsection and just use the `zig build` commands documented above.
 
 The `benchmark` binary requires two positional arguments and additionally has two optional arguments.
-1. Demo binary path (relative or absolute).
+1. Demo binary path (relative or absolute, use "./"-prefix if in the working directory).
 2. CSV results output path (relative or absolute).
 3. Run duration (in seconds, default = 10).
 4. Warm-up duration override (in seconds, default = 5).
 ```bash
 cd zig-out/bin
 # Run the benchmark for 30 seconds with a 2 second warm-up, output CSVs to /mnt/results
-./benchmark demo /mnt/results 30 2
+./benchmark ./demo /mnt/results 30 2
 ```
 
 The `demo` binary has two two optional flags.
