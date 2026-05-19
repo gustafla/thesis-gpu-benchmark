@@ -76,16 +76,19 @@ zig build -Doptimize=ReleaseFast benchmark
 When executing `zig build benchmark`, the stdout streams are captured into separate files
 matching their **tag** identities inside `zig-out/results/[tag].csv`.
 
-The CSV data format tracks the GPU pass execution timeline. It uses the following schema:
+The CSV data uses the following schema:
 
 | Column Index | Field Name | Data Type | Description |
 | :--- | :--- | :--- | :--- |
-| **0** | `FrameCounter` | `integer` | Identifies frames (0 or 1, by default). |
-| **1** | `PassIndex` | `integer` | Sequential index to the **tag**-culled `src/render.zon` pass list. [See below](#srcrenderzon). |
-| **2** | `TimestampPeriod` | `float` | Hardware scale factor (nanoseconds per tick) copied from device limits. |
-| **3** | `StartTicks` | `uint64` | Raw counter ticks at the start of pass execution on the GPU. |
-| **4** | `EndTicks` | `uint64` | Raw counter ticks at the end of pass execution on the GPU. |
-| **5** | `DurationMicros` | `float` | Total duration converted to microseconds. |
+| **0** | `PassIndex` | `integer` | Sequential index to the **tag**-culled `src/render.zon` pass list. [See below](#srcrenderzon). |
+| **1** | `StartTicks` | `uint64` | Raw counter ticks at the start of pass execution on the GPU. |
+| **2** | `EndTicks` | `uint64` | Raw counter ticks at the end of pass execution on the GPU. |
+| **3** | `DurationNanos` | `float` | Pass start to end duration in nanoseconds. |
+
+The initial rows contain per-run constants in comments, formatted `# [Field]: [value]`:
+* `# WarmupDuration`: The run warm-up time nanoseconds.
+* `# WarmupRows`: The number of initial data rows that are warming up the GPU. **Ignore** this many initial rows.
+* `# TimestampPeriod`: The GPU counter tick period in nanoseconds.
 
 ## Project Configuration Layout
 

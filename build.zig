@@ -1,7 +1,7 @@
 const std = @import("std");
 const engine = @import("mehustin2");
 
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) !void {
     // Initialize options and dependency
     const options = engine.Options.init(b);
     const engine_dep = b.dependency("mehustin2", options);
@@ -54,24 +54,24 @@ pub fn build(b: *std.Build) void {
 
     const benchmark_step = b.step("benchmark", "Run all benchmarks");
 
-    var arg_duration: ?[]const u8 = null;
-    if (b.args) |args| arg_duration = args[0];
+    var warmup: f32 = 5;
+    var duration: ?f32 = null;
+    if (b.args) |args| {
+        if (args.len > 0) duration = try std.fmt.parseFloat(f32, args[0]);
+        if (args.len > 1) warmup = try std.fmt.parseFloat(f32, args[1]);
+    }
 
     var prev_step: ?*std.Build.Step = null;
 
     for (timeline.tags) |tag| {
         const run_step = b.addRunArtifact(exe);
-        const tag_duration = b.fmt("{}", .{tag.duration});
+        const run_duration = b.fmt("{}", .{(duration orelse tag.duration) + warmup});
         run_step.step.dependOn(b.getInstallStep());
         run_step.has_side_effects = true;
         run_step.setCwd(.{ .cwd_relative = b.exe_dir });
         run_step.addArgs(&.{
             "--tags-override",     tag.name,
-            "--duration-override",
-            if (std.mem.eql(u8, tag.name, "warmup"))
-                tag_duration
-            else
-                arg_duration orelse tag_duration,
+            "--duration-override", run_duration,
         });
 
         // Force sequential execution

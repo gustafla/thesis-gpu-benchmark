@@ -1,24 +1,11 @@
 .{
     .tags = .{
-        .{ .name = "warmup", .duration = 60, .t = .seq },
         .{ .name = "comp_naive", .duration = 10, .t = .seq },
-
-        .{ .name = "warmup", .duration = 60, .t = .seq },
         .{ .name = "comp_2pass_separable", .duration = 10, .t = .seq },
-
-        .{ .name = "warmup", .duration = 60, .t = .seq },
         .{ .name = "comp_2pass_separable_cache", .duration = 10, .t = .seq },
-
-        .{ .name = "warmup", .duration = 60, .t = .seq },
         .{ .name = "comp_1pass_separable_cache", .duration = 10, .t = .seq },
-
-        .{ .name = "warmup", .duration = 60, .t = .seq },
         .{ .name = "frag_naive", .duration = 10, .t = .seq },
-
-        .{ .name = "warmup", .duration = 60, .t = .seq },
         .{ .name = "frag_2pass_separable", .duration = 10, .t = .seq },
-
-        .{ .name = "warmup", .duration = 60, .t = .seq },
         .{ .name = "frag_dual_kawase", .duration = 10, .t = .seq },
     },
     .text = .{
