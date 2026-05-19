@@ -45,8 +45,8 @@ To successfully compile this benchmark, ensure the following dependencies are in
 ## Execution and Build Commands
 
 The custom [`build.zig`](build.zig) handles compiling shaders and directing benchmark runs.
-* **Compile:** `zig build -Doptimize=ReleaseFast` - Outputs binaries to `zig-out`.
-* **Run the demo:** `zig build run` - Compiles and spins up the interactive testing.
+* **Compile:** `zig build` - Outputs binaries to `zig-out`.
+* **Run the demo:** `zig build run` - Outputs binaries to `zig-out` and spins up the interactive testing.
   See the [engine README](https://github.com/gustafla/mehustin2) file for usage.
 * **Run automated benchmarks:** `zig build benchmark` -
   Directs a fully automated, serialized profiling routine.
@@ -58,10 +58,34 @@ The custom [`build.zig`](build.zig) handles compiling shaders and directing benc
   zig build -Doptimize=ReleaseFast benchmark -- 30 2
   ```
 
-### Using the Built Binaries
+## Build Options
+
+To query the full list of build options, run `zig build --help`.
+
+For accurate results, never benchmark with a debug binary.
+Use `-Doptimize`:
+```bash
+zig build -Doptimize=ReleaseFast benchmark
+```
+
+By default, the target architecture is the host CPU and its feature set.
+To build for another architecture, such as generic x86_64, use `-Dtarget`:
+```bash
+# Generic x86_64
+zig build -Doptimize=ReleaseFast -Dtarget=x86_64-linux-gnu
+
+# Generic aarch64
+zig build -Doptimize=ReleaseFast -Dtarget=aarch64-linux-gnu
+```
+
+**Note:** *Each `zig build` command overwrites the binaries generated previously.*
+Remember to output the correct binaries if you intend to export the build artifacts to another host,
+i.e. don't forget to run `zig build` with the intended `-Doptimize` and `-Dtarget` options.
+
+## Using the Built Binaries
 
 This subsection documents the binaries emitted by `zig build`.
-If you intend to run the benchmark on the build host, you can ignore this subsection and just use the `zig build` commands documented above.
+If you intend to run the benchmark on the same host as the build process, you can ignore this subsection and just use the `zig build` commands documented above.
 
 The `benchmark` binary requires two positional arguments and additionally has two optional arguments.
 1. Demo binary path (relative or absolute, use "./"-prefix if in the working directory).
@@ -83,25 +107,6 @@ cd zig-out/bin
 ./demo --duration-override 30
 ```
 
-## Build Options
-
-To query the full list of build options, run `zig build --help`.
-
-For accurate results, never benchmark with a debug binary.
-Use `-Doptimize`:
-```bash
-zig build -Doptimize=ReleaseFast benchmark
-```
-
-By default, the target architecture is the host CPU and its feature set.
-To build for another architecture, such as generic x86_64, use `-Dtarget`:
-```bash
-# Generic x86_64
-zig build -Doptimize=ReleaseFast -Dtarget=x86_64-linux-gnu
-
-# Generic aarch64
-zig build -Doptimize=ReleaseFast -Dtarget=aarch64-linux-gnu
-```
 
 ## CSV Data Schema
 
