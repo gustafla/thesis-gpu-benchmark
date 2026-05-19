@@ -1,5 +1,6 @@
 .{
     .tags = .{
+        .{ .name = "warmup", .duration = 60, .t = .seq },
         .{ .name = "comp_naive", .duration = 10, .t = .seq },
         .{ .name = "comp_2pass_separable", .duration = 10, .t = .seq },
         .{ .name = "comp_2pass_separable_cache", .duration = 10, .t = .seq },

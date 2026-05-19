@@ -50,7 +50,7 @@
 
         // Compute naive
         .{ .compute = .{
-            .require_all_tags = .{.comp_naive},
+            .require_any_tags = .{ .comp_naive, .warmup },
             .dispatches = .{.{
                 .comp = .{
                     .file = "bloom.glsl",

@@ -1,1 +1,1 @@
-- [ ] Benchmark warm-up
+- [X] Benchmark warm-up
