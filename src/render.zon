@@ -304,6 +304,138 @@
             .color_targets = .{.{ .target = .{ .index = 3 } }},
         } },
 
+        // Fragment jimenez
+        .{ .render = .{
+            .require_all_tags = .{.frag_jimenez},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "jimenez", "down" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[1]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 4 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_jimenez},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "jimenez", "down" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[4]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 5 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_jimenez},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "jimenez", "down" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[5]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 6 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_jimenez},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "jimenez", "down" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[6]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 7 } }},
+        } },
+        // .{ .render = .{
+        //     .require_all_tags = .{.frag_jimenez},
+        //     .drawcalls = .{.{
+        //         .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+        //             .file = "bloom.glsl",
+        //             .params = .{ "jimenez", "down" },
+        //         } } } }},
+        //         .fragment_samplers = .{
+        //             .{ .texture = "color_targets[7]", .sampler = "linear" },
+        //         },
+        //     }},
+        //     .color_targets = .{.{ .target = .{ .index = 8 } }},
+        // } },
+        // .{ .render = .{
+        //     .require_all_tags = .{.frag_jimenez},
+        //     .drawcalls = .{.{
+        //         .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+        //             .file = "bloom.glsl",
+        //             .params = .{ "jimenez", "up" },
+        //         } } } }},
+        //         .fragment_samplers = .{
+        //             .{ .texture = "color_targets[8]", .sampler = "linear" },
+        //         },
+        //     }},
+        //     .color_targets = .{.{ .target = .{ .index = 7 } }},
+        // } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_jimenez},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "jimenez", "up" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[7]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 6 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_jimenez},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "jimenez", "up" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[6]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 5 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_jimenez},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "jimenez", "up" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[5]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 4 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_jimenez},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "jimenez", "up" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[4]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 3 } }},
+        } },
+
         // Post processing and output
         .{ .render = .{
             .drawcalls = .{

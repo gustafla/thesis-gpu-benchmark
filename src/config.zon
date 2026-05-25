@@ -11,4 +11,5 @@
 
     .blur_radius = 100,
     .blur_sigma = 30,
+    .blur_up_scale = 2,
 }

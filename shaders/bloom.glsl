@@ -178,7 +178,7 @@ void main() {
     vec4 sum = vec4(0.0);
 
     #if defined(UP)
-    const float weight = 1.0 / 12;
+    const float weight = 1.0 / 12.0;
     sum += texture(u_input_texture, in_uv + vec2(-o.x * 2.0, 0.0));
     sum += texture(u_input_texture, in_uv + vec2(o.x * 2.0, 0.0));
     sum += texture(u_input_texture, in_uv + vec2(0.0, -o.y * 2.0));
@@ -188,7 +188,7 @@ void main() {
     sum += texture(u_input_texture, in_uv + vec2(-o.x, -o.y)) * 2.0;
     sum += texture(u_input_texture, in_uv + vec2(o.x, -o.y)) * 2.0;
     #elif defined(DOWN)
-    const float weight = 1.0 / 8;
+    const float weight = 1.0 / 8.0;
     sum += texture(u_input_texture, in_uv) * 4.0;
     sum += texture(u_input_texture, in_uv + vec2(-o.x, -o.y));
     sum += texture(u_input_texture, in_uv + vec2(o.x, -o.y));
@@ -201,4 +201,48 @@ void main() {
     out_color = sum * weight;
 }
 #endif // KAWASE
+
+#if defined(JIMENEZ)
+void main() {
+    vec2 t = 1.0 / textureSize(u_input_texture, 0);
+    vec2 o = t * 0.5;
+
+    vec4 sum = vec4(0.0);
+
+    #if defined(UP)
+    const float weight = 1.0 / 16.0;
+    #if defined(BLUR_UP_SCALE)
+    t *= BLUR_UP_SCALE;
+    #endif
+    sum += texture(u_input_texture, in_uv + vec2(-1.0, 1.0) * t);
+    sum += texture(u_input_texture, in_uv + vec2(0.0, 1.0) * t) * 2.0;
+    sum += texture(u_input_texture, in_uv + vec2(1.0, 1.0) * t);
+    sum += texture(u_input_texture, in_uv + vec2(-1.0, 0.0) * t) * 2.0;
+    sum += texture(u_input_texture, in_uv + vec2(0.0, 0.0) * t) * 4.0;
+    sum += texture(u_input_texture, in_uv + vec2(1.0, 0.0) * t) * 2.0;
+    sum += texture(u_input_texture, in_uv + vec2(-1.0, -1.0) * t);
+    sum += texture(u_input_texture, in_uv + vec2(0.0, -1.0) * t) * 2.0;
+    sum += texture(u_input_texture, in_uv + vec2(1.0, -1.0) * t);
+    #elif defined(DOWN)
+    const float weight = 1.0 / 32.0;
+    sum += texture(u_input_texture, in_uv + vec2(-2.0, 2.0) * t);
+    sum += texture(u_input_texture, in_uv + vec2(0.0, 2.0) * t) * 2.0;
+    sum += texture(u_input_texture, in_uv + vec2(2.0, 2.0) * t);
+    sum += texture(u_input_texture, in_uv + vec2(-2.0, 0.0) * t) * 2.0;
+    sum += texture(u_input_texture, in_uv + vec2(0.0, 0.0) * t) * 4.0;
+    sum += texture(u_input_texture, in_uv + vec2(2.0, 0.0) * t) * 2.0;
+    sum += texture(u_input_texture, in_uv + vec2(-2.0, -2.0) * t);
+    sum += texture(u_input_texture, in_uv + vec2(0.0, -2.0) * t) * 2.0;
+    sum += texture(u_input_texture, in_uv + vec2(2.0, -2.0) * t);
+    sum += texture(u_input_texture, in_uv + vec2(-1.0, 1.0) * t) * 4.0;
+    sum += texture(u_input_texture, in_uv + vec2(1.0, 1.0) * t) * 4.0;
+    sum += texture(u_input_texture, in_uv + vec2(-1.0, -1.0) * t) * 4.0;
+    sum += texture(u_input_texture, in_uv + vec2(1.0, -1.0) * t) * 4.0;
+    #else
+    #error "Either UP or DOWN must be defined"
+    #endif // UP elif DOWN
+
+    out_color = sum * weight;
+}
+#endif // JIMENEZ
 #endif // FRAGMENT
