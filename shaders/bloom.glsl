@@ -205,7 +205,6 @@ void main() {
 #if defined(JIMENEZ)
 void main() {
     vec2 t = 1.0 / textureSize(u_input_texture, 0);
-    vec2 o = t * 0.5;
 
     vec4 sum = vec4(0.0);
 
