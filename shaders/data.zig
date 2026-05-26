@@ -10,7 +10,6 @@ pub const kernel = struct {
         var buffer: [size + 1]f32 = undefined;
 
         for (0..buffer.len) |i| buffer[i] = g(@floatFromInt(i));
-        normalize(&buffer);
         return buffer;
     }
 
@@ -19,9 +18,3 @@ pub const kernel = struct {
             (@exp((-1.0 / 2.0) * ((x * x) / (sigma * sigma))));
     }
 };
-
-fn normalize(xs: []f32) void {
-    var sum: f32 = 0;
-    for (xs) |x| sum += x;
-    for (xs) |*x| x.* /= sum;
-}
