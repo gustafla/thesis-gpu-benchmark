@@ -126,20 +126,74 @@ layout(location = 0) out vec4 out_color;
 
 layout(set = 2, binding = 0) uniform sampler2D u_input_texture;
 
+#if defined(PREFILTER)
+#if !defined(BLOOM_PRE_THRESHOLD)
+#define BLOOM_PRE_THRESHOLD 2.0
+#endif
+#if !defined(BLOOM_PRE_KNEE)
+#define BLOOM_PRE_KNEE 2.0
+#endif
+
+#define EPSILON 0.00001
+
+#include <color.glsl>
+
+// https://www.desmos.com/calculator/0cw6zqclwh
+
+void main() {
+    vec3 color = texture(u_input_texture, in_uv).rgb;
+
+    float luma = brightness(color);
+    float soft = luma - BLOOM_PRE_THRESHOLD + BLOOM_PRE_KNEE;
+    soft = clamp(soft, 0.0, 2.0 * BLOOM_PRE_KNEE);
+    soft = soft * soft / (4.0 * BLOOM_PRE_KNEE + EPSILON);
+
+    float contribution = max(soft, luma - BLOOM_PRE_THRESHOLD);
+    contribution /= max(luma, EPSILON);
+
+    out_color = vec4(color * contribution, 1.0);
+}
+#endif // PREFILTER
+
+#if defined(COMPOSITE)
+layout(set = 2, binding = 1) uniform sampler2D u_input_texture1;
+layout(set = 2, binding = 2) uniform sampler2D u_input_texture2;
+layout(set = 2, binding = 3) uniform sampler2D u_input_texture3;
+layout(set = 2, binding = 4) uniform sampler2D u_input_texture4;
+layout(set = 2, binding = 5) uniform sampler2D u_input_texture5;
+
+void main() {
+    vec3 color = texture(u_input_texture, in_uv).rgb;
+    color += texture(u_input_texture1, in_uv).rgb;
+    color += texture(u_input_texture2, in_uv).rgb;
+    color += texture(u_input_texture3, in_uv).rgb;
+    color += texture(u_input_texture4, in_uv).rgb;
+    color += texture(u_input_texture5, in_uv).rgb;
+    out_color = vec4(color, 1.0);
+}
+#endif // COMPOSITE
+
+#if defined(SAMPLE)
+void main() {
+    out_color = texture(u_input_texture, in_uv);
+}
+#endif // SAMPLE
+
 #if defined(NAIVE)
 void main() {
-    const ivec2 img_size = textureSize(u_input_texture, 0);
-
+    vec2 t = 1.0 / textureSize(u_input_texture, 0);
+    #if defined(PIXEL_SCALE)
+    t *= PIXEL_SCALE;
+    #endif
     vec4 sum = vec4(0.0);
 
     for (int y = 0; y < N; y++) {
         for (int x = 0; x < N; x++) {
             ivec2 offset = ivec2(x - M, y - M);
-            ivec2 sample_coord = ivec2(gl_FragCoord.xy) + offset;
-            sample_coord = clamp(sample_coord, ivec2(0, 0), img_size - 1);
+            vec2 sample_coord = in_uv + t * offset;
             sum += kernel_gaussian[abs(offset.x)] *
                     kernel_gaussian[abs(offset.y)] *
-                    texelFetch(u_input_texture, sample_coord, 0);
+                    texture(u_input_texture, sample_coord);
         }
     }
 
@@ -149,22 +203,22 @@ void main() {
 
 #if defined(HORIZONTAL) || defined(VERTICAL)
 void main() {
-    const ivec2 img_size = textureSize(u_input_texture, 0);
-
+    vec2 t = 1.0 / textureSize(u_input_texture, 0);
+    #if defined(PIXEL_SCALE)
+    t *= PIXEL_SCALE;
+    #endif
     vec4 sum = vec4(0.0);
 
     for (int i = 0; i < N; i++) {
         int i_minus_m = i - M;
-
         #if defined(HORIZONTAL)
-        ivec2 sample_coord = ivec2(gl_FragCoord.x + i_minus_m, gl_FragCoord.y);
+        ivec2 offset = ivec2(i_minus_m, 0);
         #else
-        ivec2 sample_coord = ivec2(gl_FragCoord.x, gl_FragCoord.y + i_minus_m);
+        ivec2 offset = ivec2(0, i_minus_m);
         #endif
-
-        sample_coord = clamp(sample_coord, ivec2(0, 0), img_size - 1);
+        vec2 sample_coord = in_uv + t * offset;
         sum += kernel_gaussian[abs(i_minus_m)] *
-                texelFetch(u_input_texture, sample_coord, 0);
+                texture(u_input_texture, sample_coord);
     }
 
     out_color = sum;
@@ -179,21 +233,21 @@ void main() {
 
     #if defined(UP)
     const float weight = 1.0 / 12.0;
-    sum += texture(u_input_texture, in_uv + vec2(-o.x * 2.0, 0.0));
-    sum += texture(u_input_texture, in_uv + vec2(o.x * 2.0, 0.0));
-    sum += texture(u_input_texture, in_uv + vec2(0.0, -o.y * 2.0));
-    sum += texture(u_input_texture, in_uv + vec2(0.0, o.y * 2.0));
-    sum += texture(u_input_texture, in_uv + vec2(-o.x, o.y)) * 2.0;
-    sum += texture(u_input_texture, in_uv + vec2(o.x, o.y)) * 2.0;
-    sum += texture(u_input_texture, in_uv + vec2(-o.x, -o.y)) * 2.0;
-    sum += texture(u_input_texture, in_uv + vec2(o.x, -o.y)) * 2.0;
+    sum += texture(u_input_texture, in_uv + vec2(-2.0, 0.0) * o);
+    sum += texture(u_input_texture, in_uv + vec2(2.0, 0.0) * o);
+    sum += texture(u_input_texture, in_uv + vec2(0.0, -2.0) * o);
+    sum += texture(u_input_texture, in_uv + vec2(0.0, 2.0) * o);
+    sum += texture(u_input_texture, in_uv + vec2(-1.0, 1.0) * o) * 2.0;
+    sum += texture(u_input_texture, in_uv + vec2(1.0, 1.0) * o) * 2.0;
+    sum += texture(u_input_texture, in_uv + vec2(-1.0, -1.0) * o) * 2.0;
+    sum += texture(u_input_texture, in_uv + vec2(1.0, -1.0) * o) * 2.0;
     #elif defined(DOWN)
     const float weight = 1.0 / 8.0;
     sum += texture(u_input_texture, in_uv) * 4.0;
-    sum += texture(u_input_texture, in_uv + vec2(-o.x, -o.y));
-    sum += texture(u_input_texture, in_uv + vec2(o.x, -o.y));
-    sum += texture(u_input_texture, in_uv + vec2(-o.x, o.y));
-    sum += texture(u_input_texture, in_uv + vec2(o.x, o.y));
+    sum += texture(u_input_texture, in_uv + vec2(-1.0, -1.0) * o);
+    sum += texture(u_input_texture, in_uv + vec2(1.0, -1.0) * o);
+    sum += texture(u_input_texture, in_uv + vec2(-1.0, 1.0) * o);
+    sum += texture(u_input_texture, in_uv + vec2(1.0, 1.0) * o);
     #else
     #error "Either UP or DOWN must be defined"
     #endif // UP elif DOWN
@@ -205,14 +259,14 @@ void main() {
 #if defined(JIMENEZ)
 void main() {
     vec2 t = 1.0 / textureSize(u_input_texture, 0);
+    #if defined(PIXEL_SCALE)
+    t *= PIXEL_SCALE;
+    #endif
 
     vec4 sum = vec4(0.0);
 
     #if defined(UP)
     const float weight = 1.0 / 16.0;
-    #if defined(BLUR_UP_SCALE)
-    t *= BLUR_UP_SCALE;
-    #endif
     sum += texture(u_input_texture, in_uv + vec2(-1.0, 1.0) * t);
     sum += texture(u_input_texture, in_uv + vec2(0.0, 1.0) * t) * 2.0;
     sum += texture(u_input_texture, in_uv + vec2(1.0, 1.0) * t);

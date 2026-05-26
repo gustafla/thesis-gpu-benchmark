@@ -1,14 +1,19 @@
 .{
     .color_targets = .{
-        .{ .format = .r16g16b16a16_float, .sample_count = .@"4" },
-        .{ .format = .r16g16b16a16_float },
-        .{ .format = .r16g16b16a16_float },
-        .{ .format = .r16g16b16a16_float },
-        .{ .format = .r16g16b16a16_float, .q = 2 },
-        .{ .format = .r16g16b16a16_float, .q = 4 },
-        .{ .format = .r16g16b16a16_float, .q = 8 },
-        .{ .format = .r16g16b16a16_float, .q = 16 },
-        .{ .format = .r16g16b16a16_float, .q = 32 },
+        .{ .format = .r16g16b16a16_float, .sample_count = .@"4" }, // 0
+        .{ .format = .r16g16b16a16_float }, // 1
+        .{ .format = .r16g16b16a16_float }, // 2
+        .{ .format = .r16g16b16a16_float }, // 3
+        .{ .format = .r16g16b16a16_float, .q = 2 }, // 4
+        .{ .format = .r16g16b16a16_float, .q = 2 }, // 5
+        .{ .format = .r16g16b16a16_float, .q = 4 }, // 6
+        .{ .format = .r16g16b16a16_float, .q = 4 }, // 7
+        .{ .format = .r16g16b16a16_float, .q = 8 }, // 8
+        .{ .format = .r16g16b16a16_float, .q = 8 }, // 9
+        .{ .format = .r16g16b16a16_float, .q = 16 }, // 10
+        .{ .format = .r16g16b16a16_float, .q = 16 }, // 11
+        .{ .format = .r16g16b16a16_float, .q = 32 }, // 12
+        .{ .format = .r16g16b16a16_float, .q = 32 }, // 13
     },
     .depth_targets = .{
         .{ .format = .d16_unorm, .sample_count = .@"4" },
@@ -34,7 +39,7 @@
                             .file = "shaders.glsl",
                             .params = .{"main"},
                         } },
-                        .depth_test = .{},
+                        .depth_stencil_state = .{ .depth = .{} },
                     }},
                     .vertex_buffer = "cube",
                     .instance_buffer = "cube_instances",
@@ -48,85 +53,470 @@
             .depth_target = .{ .target = 0, .store_op = .dont_care },
         } },
 
+        // Bloom prefilter
+        .{ .render = .{
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"prefilter"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[1]", .sampler = "nearest" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 2 } }},
+        } },
+
         // Compute naive
         .{ .compute = .{
             .require_any_tags = .{.comp_naive},
             .dispatches = .{.{
                 .comp = .{
                     .file = "bloom.glsl",
-                    .params = .{ "naive", "blur_radius=20", "blur_sigma=5" },
+                    .params = .{"naive"},
                 },
-                .dimensions = .{
-                    .threads = .{ .x = 8, .y = 8 },
-                    .groups = .resolution_by_threads,
-                },
-                .readonly_storage_textures = .{"color_targets[1]"},
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{.threads} },
+                .readonly_storage_textures = .{"color_targets[2]"},
             }},
-            .readwrite_storage_textures = .{"color_targets[3]"},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[3]" }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{.comp_naive},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"sample"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[3]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 5 } }},
+        } },
+        .{ .compute = .{
+            .require_any_tags = .{.comp_naive},
+            .dispatches = .{.{
+                .comp = .{
+                    .file = "bloom.glsl",
+                    .params = .{"naive"},
+                },
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{ .threads, .{ .scalar = 2 } } },
+                .readonly_storage_textures = .{"color_targets[5]"},
+            }},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[4]" }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{.comp_naive},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"sample"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[4]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 7 } }},
+        } },
+        .{ .compute = .{
+            .require_any_tags = .{.comp_naive},
+            .dispatches = .{.{
+                .comp = .{
+                    .file = "bloom.glsl",
+                    .params = .{"naive"},
+                },
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{ .threads, .{ .scalar = 4 } } },
+                .readonly_storage_textures = .{"color_targets[7]"},
+            }},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[6]" }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{.comp_naive},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"sample"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[6]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 9 } }},
+        } },
+        .{ .compute = .{
+            .require_any_tags = .{.comp_naive},
+            .dispatches = .{.{
+                .comp = .{
+                    .file = "bloom.glsl",
+                    .params = .{"naive"},
+                },
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{ .threads, .{ .scalar = 8 } } },
+                .readonly_storage_textures = .{"color_targets[9]"},
+            }},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[8]" }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{.comp_naive},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"sample"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[8]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 11 } }},
+        } },
+        .{ .compute = .{
+            .require_any_tags = .{.comp_naive},
+            .dispatches = .{.{
+                .comp = .{
+                    .file = "bloom.glsl",
+                    .params = .{"naive"},
+                },
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{ .threads, .{ .scalar = 16 } } },
+                .readonly_storage_textures = .{"color_targets[11]"},
+            }},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[10]" }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{.comp_naive},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"sample"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[10]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 13 } }},
+        } },
+        .{ .compute = .{
+            .require_any_tags = .{.comp_naive},
+            .dispatches = .{.{
+                .comp = .{
+                    .file = "bloom.glsl",
+                    .params = .{"naive"},
+                },
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{ .threads, .{ .scalar = 32 } } },
+                .readonly_storage_textures = .{"color_targets[13]"},
+            }},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[12]" }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{.comp_naive},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"composite"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[3]", .sampler = "linear" },
+                    .{ .texture = "color_targets[4]", .sampler = "linear" },
+                    .{ .texture = "color_targets[6]", .sampler = "linear" },
+                    .{ .texture = "color_targets[8]", .sampler = "linear" },
+                    .{ .texture = "color_targets[10]", .sampler = "linear" },
+                    .{ .texture = "color_targets[12]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 2 } }},
         } },
 
-        // Compute direct 2-pass separable
+        // Compute 2-pass separable and shared memory
         .{ .compute = .{
-            .require_all_tags = .{.comp_2pass_separable},
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
             .dispatches = .{.{
                 .comp = .{
                     .file = "bloom.glsl",
                     .params = .{"horizontal"},
                 },
-                .dimensions = .{
-                    .threads = .{ .x = 8, .y = 8 },
-                    .groups = .resolution_by_threads,
-                },
-                .readonly_storage_textures = .{"color_targets[1]"},
+                .variants = .{.{
+                    .require_all_tags = .{.comp_2pass_separable_cache},
+                    .comp_params = .{"cache"},
+                }},
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{.threads} },
+                .readonly_storage_textures = .{"color_targets[2]"},
             }},
-            .readwrite_storage_textures = .{"color_targets[2]"},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[3]" }},
         } },
         .{ .compute = .{
-            .require_all_tags = .{.comp_2pass_separable},
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
             .dispatches = .{.{
                 .comp = .{
                     .file = "bloom.glsl",
                     .params = .{"vertical"},
                 },
-                .dimensions = .{
-                    .threads = .{ .x = 8, .y = 8 },
-                    .groups = .resolution_by_threads,
-                },
-                .readonly_storage_textures = .{"color_targets[2]"},
+                .variants = .{.{
+                    .require_all_tags = .{.comp_2pass_separable_cache},
+                    .comp_params = .{"cache"},
+                }},
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{.threads} },
+                .readonly_storage_textures = .{"color_targets[3]"},
             }},
-            .readwrite_storage_textures = .{"color_targets[3]"},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[2]" }},
         } },
-
-        // Compute shared memory 2-pass separable
+        .{ .render = .{
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"sample"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[2]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 4 } }},
+        } },
         .{ .compute = .{
-            .require_all_tags = .{.comp_2pass_separable_cache},
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
             .dispatches = .{.{
                 .comp = .{
                     .file = "bloom.glsl",
-                    .params = .{ "horizontal", "cache" },
+                    .params = .{"horizontal"},
                 },
-                .dimensions = .{
-                    .threads = .{ .x = 8, .y = 8 },
-                    .groups = .resolution_by_threads,
-                },
-                .readonly_storage_textures = .{"color_targets[1]"},
+                .variants = .{.{
+                    .require_all_tags = .{.comp_2pass_separable_cache},
+                    .comp_params = .{"cache"},
+                }},
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{ .threads, .{ .scalar = 2 } } },
+                .readonly_storage_textures = .{"color_targets[4]"},
             }},
-            .readwrite_storage_textures = .{"color_targets[2]"},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[5]" }},
         } },
         .{ .compute = .{
-            .require_all_tags = .{.comp_2pass_separable_cache},
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
             .dispatches = .{.{
                 .comp = .{
                     .file = "bloom.glsl",
-                    .params = .{ "vertical", "cache" },
+                    .params = .{"vertical"},
                 },
-                .dimensions = .{
-                    .threads = .{ .x = 8, .y = 8 },
-                    .groups = .resolution_by_threads,
-                },
-                .readonly_storage_textures = .{"color_targets[2]"},
+                .variants = .{.{
+                    .require_all_tags = .{.comp_2pass_separable_cache},
+                    .comp_params = .{"cache"},
+                }},
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{ .threads, .{ .scalar = 2 } } },
+                .readonly_storage_textures = .{"color_targets[5]"},
             }},
-            .readwrite_storage_textures = .{"color_targets[3]"},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[4]" }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"sample"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[4]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 6 } }},
+        } },
+        .{ .compute = .{
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
+            .dispatches = .{.{
+                .comp = .{
+                    .file = "bloom.glsl",
+                    .params = .{"horizontal"},
+                },
+                .variants = .{.{
+                    .require_all_tags = .{.comp_2pass_separable_cache},
+                    .comp_params = .{"cache"},
+                }},
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{ .threads, .{ .scalar = 4 } } },
+                .readonly_storage_textures = .{"color_targets[6]"},
+            }},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[7]" }},
+        } },
+        .{ .compute = .{
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
+            .dispatches = .{.{
+                .comp = .{
+                    .file = "bloom.glsl",
+                    .params = .{"vertical"},
+                },
+                .variants = .{.{
+                    .require_all_tags = .{.comp_2pass_separable_cache},
+                    .comp_params = .{"cache"},
+                }},
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{ .threads, .{ .scalar = 4 } } },
+                .readonly_storage_textures = .{"color_targets[7]"},
+            }},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[6]" }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"sample"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[6]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 8 } }},
+        } },
+        .{ .compute = .{
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
+            .dispatches = .{.{
+                .comp = .{
+                    .file = "bloom.glsl",
+                    .params = .{"horizontal"},
+                },
+                .variants = .{.{
+                    .require_all_tags = .{.comp_2pass_separable_cache},
+                    .comp_params = .{"cache"},
+                }},
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{ .threads, .{ .scalar = 8 } } },
+                .readonly_storage_textures = .{"color_targets[8]"},
+            }},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[9]" }},
+        } },
+        .{ .compute = .{
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
+            .dispatches = .{.{
+                .comp = .{
+                    .file = "bloom.glsl",
+                    .params = .{"vertical"},
+                },
+                .variants = .{.{
+                    .require_all_tags = .{.comp_2pass_separable_cache},
+                    .comp_params = .{"cache"},
+                }},
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{ .threads, .{ .scalar = 8 } } },
+                .readonly_storage_textures = .{"color_targets[9]"},
+            }},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[8]" }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"sample"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[8]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 10 } }},
+        } },
+        .{ .compute = .{
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
+            .dispatches = .{.{
+                .comp = .{
+                    .file = "bloom.glsl",
+                    .params = .{"horizontal"},
+                },
+                .variants = .{.{
+                    .require_all_tags = .{.comp_2pass_separable_cache},
+                    .comp_params = .{"cache"},
+                }},
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{ .threads, .{ .scalar = 16 } } },
+                .readonly_storage_textures = .{"color_targets[10]"},
+            }},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[11]" }},
+        } },
+        .{ .compute = .{
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
+            .dispatches = .{.{
+                .comp = .{
+                    .file = "bloom.glsl",
+                    .params = .{"vertical"},
+                },
+                .variants = .{.{
+                    .require_all_tags = .{.comp_2pass_separable_cache},
+                    .comp_params = .{"cache"},
+                }},
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{ .threads, .{ .scalar = 16 } } },
+                .readonly_storage_textures = .{"color_targets[11]"},
+            }},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[10]" }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"sample"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[10]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 12 } }},
+        } },
+        .{ .compute = .{
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
+            .dispatches = .{.{
+                .comp = .{
+                    .file = "bloom.glsl",
+                    .params = .{"horizontal"},
+                },
+                .variants = .{.{
+                    .require_all_tags = .{.comp_2pass_separable_cache},
+                    .comp_params = .{"cache"},
+                }},
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{ .threads, .{ .scalar = 32 } } },
+                .readonly_storage_textures = .{"color_targets[12]"},
+            }},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[13]" }},
+        } },
+        .{ .compute = .{
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
+            .dispatches = .{.{
+                .comp = .{
+                    .file = "bloom.glsl",
+                    .params = .{"vertical"},
+                },
+                .variants = .{.{
+                    .require_all_tags = .{.comp_2pass_separable_cache},
+                    .comp_params = .{"cache"},
+                }},
+                .threads = .{ .x = 8, .y = 8 },
+                .groups = .{ .p = .resolution, .q = .{ .threads, .{ .scalar = 32 } } },
+                .readonly_storage_textures = .{"color_targets[13]"},
+            }},
+            .readwrite_storage_textures = .{.{ .texture = "color_targets[12]" }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{ .comp_2pass_separable, .comp_2pass_separable_cache },
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"composite"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[2]", .sampler = "linear" },
+                    .{ .texture = "color_targets[4]", .sampler = "linear" },
+                    .{ .texture = "color_targets[6]", .sampler = "linear" },
+                    .{ .texture = "color_targets[8]", .sampler = "linear" },
+                    .{ .texture = "color_targets[10]", .sampler = "linear" },
+                    .{ .texture = "color_targets[12]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 2 } }},
         } },
 
         // Fragment naive
@@ -135,13 +525,96 @@
             .drawcalls = .{.{
                 .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
                     .file = "bloom.glsl",
-                    .params = .{ "naive", "blur_radius=20", "blur_sigma=5" },
+                    .params = .{ "naive", "pixel_scale=2" },
                 } } } }},
                 .fragment_samplers = .{
-                    .{ .texture = "color_targets[1]", .sampler = "nearest" },
+                    .{ .texture = "color_targets[2]", .sampler = "linear" },
                 },
             }},
             .color_targets = .{.{ .target = .{ .index = 3 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_naive},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "naive", "pixel_scale=2" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[3]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 4 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_naive},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "naive", "pixel_scale=2" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[4]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 6 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_naive},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "naive", "pixel_scale=2" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[6]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 8 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_naive},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "naive", "pixel_scale=2" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[8]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 10 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_naive},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "naive", "pixel_scale=2" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[10]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 12 } }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{.frag_naive},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"composite"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[3]", .sampler = "linear" },
+                    .{ .texture = "color_targets[4]", .sampler = "linear" },
+                    .{ .texture = "color_targets[6]", .sampler = "linear" },
+                    .{ .texture = "color_targets[8]", .sampler = "linear" },
+                    .{ .texture = "color_targets[10]", .sampler = "linear" },
+                    .{ .texture = "color_targets[12]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 2 } }},
         } },
 
         // Fragment 2-pass separable
@@ -150,10 +623,23 @@
             .drawcalls = .{.{
                 .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
                     .file = "bloom.glsl",
-                    .params = .{"horizontal"},
+                    .params = .{ "horizontal", "pixel_scale=2" },
                 } } } }},
                 .fragment_samplers = .{
-                    .{ .texture = "color_targets[1]", .sampler = "nearest" },
+                    .{ .texture = "color_targets[2]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 3 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_2pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"vertical"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[3]", .sampler = "linear" },
                 },
             }},
             .color_targets = .{.{ .target = .{ .index = 2 } }},
@@ -163,13 +649,389 @@
             .drawcalls = .{.{
                 .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
                     .file = "bloom.glsl",
+                    .params = .{ "horizontal", "pixel_scale=2" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[2]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 5 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_2pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
                     .params = .{"vertical"},
                 } } } }},
                 .fragment_samplers = .{
-                    .{ .texture = "color_targets[2]", .sampler = "nearest" },
+                    .{ .texture = "color_targets[5]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 4 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_2pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "horizontal", "pixel_scale=2" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[4]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 7 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_2pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"vertical"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[7]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 6 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_2pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "horizontal", "pixel_scale=2" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[6]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 9 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_2pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"vertical"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[9]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 8 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_2pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "horizontal", "pixel_scale=2" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[8]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 11 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_2pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"vertical"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[11]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 10 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_2pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{ "horizontal", "pixel_scale=2" },
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[10]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 13 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_2pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"vertical"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[13]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 12 } }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{.frag_2pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"composite"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[2]", .sampler = "linear" },
+                    .{ .texture = "color_targets[4]", .sampler = "linear" },
+                    .{ .texture = "color_targets[6]", .sampler = "linear" },
+                    .{ .texture = "color_targets[8]", .sampler = "linear" },
+                    .{ .texture = "color_targets[10]", .sampler = "linear" },
+                    .{ .texture = "color_targets[12]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 2 } }},
+        } },
+
+        // Fragment 3pass separable
+        .{ .render = .{
+            .require_all_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"horizontal"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[2]", .sampler = "linear" },
                 },
             }},
             .color_targets = .{.{ .target = .{ .index = 3 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"vertical"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[3]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 2 } }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"sample"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[2]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 4 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"horizontal"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[4]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 5 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"vertical"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[5]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 4 } }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"sample"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[4]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 6 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"horizontal"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[6]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 7 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"vertical"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[7]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 6 } }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"sample"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[6]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 8 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"horizontal"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[8]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 9 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"vertical"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[9]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 8 } }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"sample"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[8]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 10 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"horizontal"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[10]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 11 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"vertical"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[11]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 10 } }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"sample"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[10]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 12 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"horizontal"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[12]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 13 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"vertical"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[13]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 12 } }},
+        } },
+        .{ .render = .{
+            .require_any_tags = .{.frag_3pass_separable},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"composite"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[2]", .sampler = "linear" },
+                    .{ .texture = "color_targets[4]", .sampler = "linear" },
+                    .{ .texture = "color_targets[6]", .sampler = "linear" },
+                    .{ .texture = "color_targets[8]", .sampler = "linear" },
+                    .{ .texture = "color_targets[10]", .sampler = "linear" },
+                    .{ .texture = "color_targets[12]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 2 } }},
         } },
 
         // Fragment dual kawase
@@ -181,7 +1043,7 @@
                     .params = .{ "kawase", "down" },
                 } } } }},
                 .fragment_samplers = .{
-                    .{ .texture = "color_targets[1]", .sampler = "linear" },
+                    .{ .texture = "color_targets[2]", .sampler = "linear" },
                 },
             }},
             .color_targets = .{.{ .target = .{ .index = 4 } }},
@@ -197,19 +1059,6 @@
                     .{ .texture = "color_targets[4]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 5 } }},
-        } },
-        .{ .render = .{
-            .require_all_tags = .{.frag_dual_kawase},
-            .drawcalls = .{.{
-                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
-                    .file = "bloom.glsl",
-                    .params = .{ "kawase", "down" },
-                } } } }},
-                .fragment_samplers = .{
-                    .{ .texture = "color_targets[5]", .sampler = "linear" },
-                },
-            }},
             .color_targets = .{.{ .target = .{ .index = 6 } }},
         } },
         .{ .render = .{
@@ -221,19 +1070,6 @@
                 } } } }},
                 .fragment_samplers = .{
                     .{ .texture = "color_targets[6]", .sampler = "linear" },
-                },
-            }},
-            .color_targets = .{.{ .target = .{ .index = 7 } }},
-        } },
-        .{ .render = .{
-            .require_all_tags = .{.frag_dual_kawase},
-            .drawcalls = .{.{
-                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
-                    .file = "bloom.glsl",
-                    .params = .{ "kawase", "down" },
-                } } } }},
-                .fragment_samplers = .{
-                    .{ .texture = "color_targets[7]", .sampler = "linear" },
                 },
             }},
             .color_targets = .{.{ .target = .{ .index = 8 } }},
@@ -243,65 +1079,126 @@
             .drawcalls = .{.{
                 .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
                     .file = "bloom.glsl",
-                    .params = .{ "kawase", "up" },
+                    .params = .{ "kawase", "down" },
                 } } } }},
                 .fragment_samplers = .{
                     .{ .texture = "color_targets[8]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 7 } }},
+            .color_targets = .{.{ .target = .{ .index = 10 } }},
         } },
         .{ .render = .{
             .require_all_tags = .{.frag_dual_kawase},
             .drawcalls = .{.{
                 .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
                     .file = "bloom.glsl",
-                    .params = .{ "kawase", "up" },
+                    .params = .{ "kawase", "down" },
                 } } } }},
                 .fragment_samplers = .{
-                    .{ .texture = "color_targets[7]", .sampler = "linear" },
+                    .{ .texture = "color_targets[10]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 6 } }},
+            .color_targets = .{.{ .target = .{ .index = 12 } }},
         } },
         .{ .render = .{
             .require_all_tags = .{.frag_dual_kawase},
             .drawcalls = .{.{
-                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
-                    .file = "bloom.glsl",
-                    .params = .{ "kawase", "up" },
-                } } } }},
+                .pipelines = .{.{
+                    .shader = .{ .stages = .{ .frag = .{
+                        .file = "bloom.glsl",
+                        .params = .{ "kawase", "up" },
+                    } } },
+                    .blend_states = .{.{
+                        .enable = true,
+                        .src_color = .one,
+                        .dst_color = .one,
+                    }},
+                }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[12]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 10 }, .load_op = .load }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_dual_kawase},
+            .drawcalls = .{.{
+                .pipelines = .{.{
+                    .shader = .{ .stages = .{ .frag = .{
+                        .file = "bloom.glsl",
+                        .params = .{ "kawase", "up" },
+                    } } },
+                    .blend_states = .{.{
+                        .enable = true,
+                        .src_color = .one,
+                        .dst_color = .one,
+                    }},
+                }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[10]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 8 }, .load_op = .load }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_dual_kawase},
+            .drawcalls = .{.{
+                .pipelines = .{.{
+                    .shader = .{ .stages = .{ .frag = .{
+                        .file = "bloom.glsl",
+                        .params = .{ "kawase", "up" },
+                    } } },
+                    .blend_states = .{.{
+                        .enable = true,
+                        .src_color = .one,
+                        .dst_color = .one,
+                    }},
+                }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[8]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 6 }, .load_op = .load }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_dual_kawase},
+            .drawcalls = .{.{
+                .pipelines = .{.{
+                    .shader = .{ .stages = .{ .frag = .{
+                        .file = "bloom.glsl",
+                        .params = .{ "kawase", "up" },
+                    } } },
+                    .blend_states = .{.{
+                        .enable = true,
+                        .src_color = .one,
+                        .dst_color = .one,
+                    }},
+                }},
                 .fragment_samplers = .{
                     .{ .texture = "color_targets[6]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 5 } }},
+            .color_targets = .{.{ .target = .{ .index = 4 }, .load_op = .load }},
         } },
         .{ .render = .{
             .require_all_tags = .{.frag_dual_kawase},
             .drawcalls = .{.{
-                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
-                    .file = "bloom.glsl",
-                    .params = .{ "kawase", "up" },
-                } } } }},
-                .fragment_samplers = .{
-                    .{ .texture = "color_targets[5]", .sampler = "linear" },
-                },
-            }},
-            .color_targets = .{.{ .target = .{ .index = 4 } }},
-        } },
-        .{ .render = .{
-            .require_all_tags = .{.frag_dual_kawase},
-            .drawcalls = .{.{
-                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
-                    .file = "bloom.glsl",
-                    .params = .{ "kawase", "up" },
-                } } } }},
+                .pipelines = .{.{
+                    .shader = .{ .stages = .{ .frag = .{
+                        .file = "bloom.glsl",
+                        .params = .{ "kawase", "up" },
+                    } } },
+                    .blend_states = .{.{
+                        .enable = true,
+                        .src_color = .one,
+                        .dst_color = .one,
+                    }},
+                }},
                 .fragment_samplers = .{
                     .{ .texture = "color_targets[4]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 3 } }},
+            .color_targets = .{.{ .target = .{ .index = 2 }, .load_op = .load }},
         } },
 
         // Fragment jimenez
@@ -313,7 +1210,7 @@
                     .params = .{ "jimenez", "down" },
                 } } } }},
                 .fragment_samplers = .{
-                    .{ .texture = "color_targets[1]", .sampler = "linear" },
+                    .{ .texture = "color_targets[2]", .sampler = "linear" },
                 },
             }},
             .color_targets = .{.{ .target = .{ .index = 4 } }},
@@ -329,19 +1226,6 @@
                     .{ .texture = "color_targets[4]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 5 } }},
-        } },
-        .{ .render = .{
-            .require_all_tags = .{.frag_jimenez},
-            .drawcalls = .{.{
-                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
-                    .file = "bloom.glsl",
-                    .params = .{ "jimenez", "down" },
-                } } } }},
-                .fragment_samplers = .{
-                    .{ .texture = "color_targets[5]", .sampler = "linear" },
-                },
-            }},
             .color_targets = .{.{ .target = .{ .index = 6 } }},
         } },
         .{ .render = .{
@@ -355,85 +1239,135 @@
                     .{ .texture = "color_targets[6]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 7 } }},
+            .color_targets = .{.{ .target = .{ .index = 8 } }},
         } },
-        // .{ .render = .{
-        //     .require_all_tags = .{.frag_jimenez},
-        //     .drawcalls = .{.{
-        //         .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
-        //             .file = "bloom.glsl",
-        //             .params = .{ "jimenez", "down" },
-        //         } } } }},
-        //         .fragment_samplers = .{
-        //             .{ .texture = "color_targets[7]", .sampler = "linear" },
-        //         },
-        //     }},
-        //     .color_targets = .{.{ .target = .{ .index = 8 } }},
-        // } },
-        // .{ .render = .{
-        //     .require_all_tags = .{.frag_jimenez},
-        //     .drawcalls = .{.{
-        //         .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
-        //             .file = "bloom.glsl",
-        //             .params = .{ "jimenez", "up" },
-        //         } } } }},
-        //         .fragment_samplers = .{
-        //             .{ .texture = "color_targets[8]", .sampler = "linear" },
-        //         },
-        //     }},
-        //     .color_targets = .{.{ .target = .{ .index = 7 } }},
-        // } },
         .{ .render = .{
             .require_all_tags = .{.frag_jimenez},
             .drawcalls = .{.{
                 .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
                     .file = "bloom.glsl",
-                    .params = .{ "jimenez", "up" },
+                    .params = .{ "jimenez", "down" },
                 } } } }},
                 .fragment_samplers = .{
-                    .{ .texture = "color_targets[7]", .sampler = "linear" },
+                    .{ .texture = "color_targets[8]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 6 } }},
+            .color_targets = .{.{ .target = .{ .index = 10 } }},
         } },
         .{ .render = .{
             .require_all_tags = .{.frag_jimenez},
             .drawcalls = .{.{
                 .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
                     .file = "bloom.glsl",
-                    .params = .{ "jimenez", "up" },
+                    .params = .{ "jimenez", "down" },
                 } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[10]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 12 } }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_jimenez},
+            .drawcalls = .{.{
+                .pipelines = .{.{
+                    .shader = .{ .stages = .{ .frag = .{
+                        .file = "bloom.glsl",
+                        .params = .{ "jimenez", "up", "pixel_scale=2" },
+                    } } },
+                    .blend_states = .{.{
+                        .enable = true,
+                        .src_color = .one,
+                        .dst_color = .one,
+                    }},
+                }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[12]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 10 }, .load_op = .load }},
+        } },
+        .{
+            .render = .{
+                .require_all_tags = .{.frag_jimenez},
+                .drawcalls = .{.{
+                    .pipelines = .{.{
+                        .shader = .{ .stages = .{ .frag = .{
+                            .file = "bloom.glsl",
+                            .params = .{ "jimenez", "up", "pixel_scale=2" },
+                        } } },
+                        .blend_states = .{.{
+                            .enable = true,
+                            .src_color = .one,
+                            .dst_color = .one,
+                        }},
+                    }},
+                    .fragment_samplers = .{
+                        .{ .texture = "color_targets[10]", .sampler = "linear" },
+                    },
+                }},
+                .color_targets = .{.{ .target = .{ .index = 8 }, .load_op = .load }},
+            },
+        },
+        .{ .render = .{
+            .require_all_tags = .{.frag_jimenez},
+            .drawcalls = .{.{
+                .pipelines = .{.{
+                    .shader = .{ .stages = .{ .frag = .{
+                        .file = "bloom.glsl",
+                        .params = .{ "jimenez", "up", "pixel_scale=2" },
+                    } } },
+                    .blend_states = .{.{
+                        .enable = true,
+                        .src_color = .one,
+                        .dst_color = .one,
+                    }},
+                }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[8]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .target = .{ .index = 6 }, .load_op = .load }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{.frag_jimenez},
+            .drawcalls = .{.{
+                .pipelines = .{.{
+                    .shader = .{ .stages = .{ .frag = .{
+                        .file = "bloom.glsl",
+                        .params = .{ "jimenez", "up", "pixel_scale=2" },
+                    } } },
+                    .blend_states = .{.{
+                        .enable = true,
+                        .src_color = .one,
+                        .dst_color = .one,
+                    }},
+                }},
                 .fragment_samplers = .{
                     .{ .texture = "color_targets[6]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 5 } }},
+            .color_targets = .{.{ .target = .{ .index = 4 }, .load_op = .load }},
         } },
         .{ .render = .{
             .require_all_tags = .{.frag_jimenez},
             .drawcalls = .{.{
-                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
-                    .file = "bloom.glsl",
-                    .params = .{ "jimenez", "up" },
-                } } } }},
-                .fragment_samplers = .{
-                    .{ .texture = "color_targets[5]", .sampler = "linear" },
-                },
-            }},
-            .color_targets = .{.{ .target = .{ .index = 4 } }},
-        } },
-        .{ .render = .{
-            .require_all_tags = .{.frag_jimenez},
-            .drawcalls = .{.{
-                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
-                    .file = "bloom.glsl",
-                    .params = .{ "jimenez", "up" },
-                } } } }},
+                .pipelines = .{.{
+                    .shader = .{ .stages = .{ .frag = .{
+                        .file = "bloom.glsl",
+                        .params = .{ "jimenez", "up", "pixel_scale=2" },
+                    } } },
+                    .blend_states = .{.{
+                        .enable = true,
+                        .src_color = .one,
+                        .dst_color = .one,
+                    }},
+                }},
                 .fragment_samplers = .{
                     .{ .texture = "color_targets[4]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 3 } }},
+            .color_targets = .{.{ .target = .{ .index = 2 }, .load_op = .load }},
         } },
 
         // Post processing and output
@@ -448,7 +1382,7 @@
                     }},
                     .fragment_samplers = .{
                         .{ .texture = "color_targets[1]", .sampler = "nearest" },
-                        .{ .texture = "color_targets[3]", .sampler = "nearest" },
+                        .{ .texture = "color_targets[2]", .sampler = "nearest" },
                     },
                 },
                 .{
