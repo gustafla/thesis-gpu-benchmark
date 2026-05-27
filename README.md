@@ -38,8 +38,9 @@ To successfully compile this benchmark, ensure the following dependencies are in
     ~/zig-$(uname -m)-linux-0.16.0/zig zen
     ```
 * **Google Shaderc (`glslc`):** The build process requires shaderc to compile the GLSL source files into SPIR-V binaries.
-  * Arch Linux / CachyOS: `sudo pacman -S shaderc`
-  * Ubuntu / Debian: `sudo apt install glslc`
+* **Libraries:** `libpng` and `freetype2`:
+  * Arch Linux / CachyOS: `sudo pacman -S shaderc libpng freetype2`
+  * Ubuntu / Debian: `sudo apt install glslc libpng-dev libfreetype-dev`
 * Check the engine [README](https://github.com/gustafla/mehustin2) if missing dependencies are encountered.
 
 ## Execution and Build Commands
