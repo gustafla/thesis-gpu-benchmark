@@ -14,6 +14,7 @@
         .{ .format = .r16g16b16a16_float, .q = 16 }, // 11
         .{ .format = .r16g16b16a16_float, .q = 32 }, // 12
         .{ .format = .r16g16b16a16_float, .q = 32 }, // 13
+        .{ .format = .r16g16b16a16_float }, // 14
     },
     .depth_targets = .{
         .{ .format = .d16_unorm, .sample_count = .@"4" },
@@ -227,7 +228,7 @@
                     .{ .texture = "color_targets[12]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 2 } }},
+            .color_targets = .{.{ .target = .{ .index = 14 } }},
         } },
 
         // Compute 2-pass separable and shared memory
@@ -516,7 +517,7 @@
                     .{ .texture = "color_targets[12]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 2 } }},
+            .color_targets = .{.{ .target = .{ .index = 14 } }},
         } },
 
         // Fragment naive
@@ -614,7 +615,7 @@
                     .{ .texture = "color_targets[12]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 2 } }},
+            .color_targets = .{.{ .target = .{ .index = 14 } }},
         } },
 
         // Fragment 2-pass separable
@@ -790,7 +791,7 @@
                     .{ .texture = "color_targets[12]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 2 } }},
+            .color_targets = .{.{ .target = .{ .index = 14 } }},
         } },
 
         // Fragment 3pass separable
@@ -1031,7 +1032,7 @@
                     .{ .texture = "color_targets[12]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 2 } }},
+            .color_targets = .{.{ .target = .{ .index = 14 } }},
         } },
 
         // Fragment dual kawase
@@ -1198,7 +1199,7 @@
                     .{ .texture = "color_targets[4]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 2 }, .load_op = .load }},
+            .color_targets = .{.{ .target = .{ .index = 14 } }},
         } },
 
         // Fragment jimenez
@@ -1367,7 +1368,7 @@
                     .{ .texture = "color_targets[4]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .target = .{ .index = 2 }, .load_op = .load }},
+            .color_targets = .{.{ .target = .{ .index = 14 } }},
         } },
 
         // Post processing and output
@@ -1382,7 +1383,7 @@
                     }},
                     .fragment_samplers = .{
                         .{ .texture = "color_targets[1]", .sampler = "nearest" },
-                        .{ .texture = "color_targets[2]", .sampler = "nearest" },
+                        .{ .texture = "color_targets[14]", .sampler = "nearest" },
                     },
                 },
                 .{
