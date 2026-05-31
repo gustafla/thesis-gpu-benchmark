@@ -1,1 +1,3 @@
 - [X] Benchmark warm-up
+- [ ] Use only first .seq tags as the test cases
+  - [ ] Unify render.zon chains with variants and semantic tag matrix
