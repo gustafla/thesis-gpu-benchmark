@@ -1,3 +1,7 @@
 - [X] Benchmark warm-up
 - [ ] Use only first .seq tags as the test cases
   - [ ] Unify render.zon chains with variants and semantic tag matrix
+- [ ] Add dense reference convolution
+  - Should have worse memory bandwidth and worse ALU, reads and works on full-resolution data
+- [ ] Add independend dilated convolution (parallel sum of gaussians)
+  - Should have worse memory bandwidth, reads full-resolution data
