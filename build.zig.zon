@@ -8,7 +8,8 @@
             .hash = "sdl-0.5.0+3.4.8-HgKE1LoUpgHfsdzP-09Ky5sQcu2EVkLIWbWUoYaKrrRn",
         },
         .mehustin2 = .{
-            .path = "../mehustin2",
+            .url = "https://github.com/gustafla/mehustin2/archive/refs/tags/v0.18.0.tar.gz",
+            .hash = "mehustin2-0.18.0-0-24OdqjBAASS18QhjisThaZH51liOThB4Xqxg1PJTAI",
         },
     },
     .paths = .{
