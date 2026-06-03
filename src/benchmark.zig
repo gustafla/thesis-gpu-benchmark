@@ -20,6 +20,7 @@ pub fn main(init: std.process.Init) !void {
     defer results_dir.close(io);
 
     inline for (timeline.tags) |tag| {
+        if (tag.t != .seq) break;
         const run = try std.process.run(arena, io, .{
             .argv = &.{
                 exe_path,
