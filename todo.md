@@ -1,7 +1,9 @@
 - [X] Benchmark warm-up
-- [ ] Use only first .seq tags as the test cases
-  - [ ] Unify render.zon chains with variants and semantic tag matrix
+- [X] Use only first .seq tags as the test cases
+- [ ] Finish the compute separable 1-pass cache implementation
+- [ ] Rename dual kawase to marius bjorge
 - [ ] Add dense reference convolution
   - Should have worse memory bandwidth and worse ALU, reads and works on full-resolution data
 - [ ] Add independend dilated convolution (parallel sum of gaussians)
   - Should have worse memory bandwidth, reads full-resolution data
+- [ ] Make convolutions start at half-res
