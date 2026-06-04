@@ -95,12 +95,12 @@
         .{ // Compute separable convolution
             .name = "compute_filter_separable",
             .params = .{
-                .{ .name = "CONDITION_DOWNSAMPLE" },
-                .{ .name = "CONDITION_PASS1_2" },
                 .{ .name = "TEXTURE_IN" },
                 .{ .name = "TEXTURE_MID" },
                 .{ .name = "TEXTURE_OUT" },
                 .{ .name = "FILTER_PARAM" },
+                .{ .name = "CONDITION_FILTER" },
+                .{ .name = "CONDITION_DOWNSAMPLE", .default = "CONDITION_FILTER" },
             },
             .passes = .{
                 .{ .render = .{
@@ -117,7 +117,7 @@
                     .color_targets = .{.{ .texture = "TEXTURE_OUT" }},
                 } },
                 .{ .compute = .{
-                    .require_all_tags = .{"CONDITION_PASS1_2"},
+                    .require_all_tags = .{"CONDITION_FILTER"},
                     .dispatches = .{.{
                         .comp = .{
                             .file = "bloom.glsl",
@@ -130,7 +130,7 @@
                     .readwrite_storage_textures = .{.{ .texture = "TEXTURE_MID" }},
                 } },
                 .{ .compute = .{
-                    .require_all_tags = .{"CONDITION_PASS1_2"},
+                    .require_all_tags = .{"CONDITION_FILTER"},
                     .dispatches = .{.{
                         .comp = .{
                             .file = "bloom.glsl",
@@ -208,10 +208,10 @@
         .{ // Fragment separable with downsampling
             .name = "fragment_filter_separable_downsample",
             .params = .{
-                .{ .name = "CONDITION_DOWNSAMPLE" },
                 .{ .name = "TEXTURE_IN" },
                 .{ .name = "TEXTURE_MID" },
                 .{ .name = "TEXTURE_OUT" },
+                .{ .name = "CONDITION_DOWNSAMPLE", .default = "frag_3pass_separable" },
             },
             .passes = .{
                 .{ .render = .{
@@ -259,10 +259,10 @@
         .{ // Fragment dual filter downsampling
             .name = "fragment_dual_filter_downsample",
             .params = .{
-                .{ .name = "CONDITION" },
-                .{ .name = "FILTER" },
                 .{ .name = "TEXTURE_IN" },
                 .{ .name = "TEXTURE_OUT" },
+                .{ .name = "FILTER" },
+                .{ .name = "CONDITION" },
             },
             .passes = .{
                 .{ .render = .{
@@ -284,11 +284,11 @@
         .{ // Fragment dual filter upsampling
             .name = "fragment_dual_filter_upsample",
             .params = .{
-                .{ .name = "CONDITION" },
-                .{ .name = "FILTER" },
                 .{ .name = "TEXTURE_IN" },
                 .{ .name = "TEXTURE_OUT" },
+                .{ .name = "FILTER" },
                 .{ .name = "FILTER_PARAM" },
+                .{ .name = "CONDITION" },
             },
             .passes = .{
                 .{ .render = .{
@@ -377,13 +377,13 @@
             .unroll = .{
                 .template = "compute_filter_separable",
                 .args = .{
-                    // CONDITION_DOWNSAMPLE, CONDITION_PASS1_2, TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT, FILTER_PARAM
-                    .{ "never", "comp_2pass_separable", "color_targets[3]", "color_targets[2]", "color_targets[3]", "" },
-                    .{ "comp_2pass_separable", "comp_2pass_separable", "color_targets[3]", "color_targets[5]", "color_targets[4]", "" },
-                    .{ "comp_2pass_separable", "comp_2pass_separable", "color_targets[4]", "color_targets[7]", "color_targets[6]", "" },
-                    .{ "comp_2pass_separable", "comp_2pass_separable", "color_targets[6]", "color_targets[9]", "color_targets[8]", "" },
-                    .{ "comp_2pass_separable", "comp_2pass_separable", "color_targets[8]", "color_targets[11]", "color_targets[10]", "" },
-                    .{ "comp_2pass_separable", "comp_2pass_separable", "color_targets[10]", "color_targets[13]", "color_targets[12]", "" },
+                    // TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT, FILTER_PARAM, CONDITION_FILTER,  CONDITION_DOWNSAMPLE
+                    .{ "color_targets[3]", "color_targets[2]", "color_targets[3]", null, "comp_2pass_separable", "never" },
+                    .{ "color_targets[3]", "color_targets[5]", "color_targets[4]", null, "comp_2pass_separable" },
+                    .{ "color_targets[4]", "color_targets[7]", "color_targets[6]", null, "comp_2pass_separable" },
+                    .{ "color_targets[6]", "color_targets[9]", "color_targets[8]", null, "comp_2pass_separable" },
+                    .{ "color_targets[8]", "color_targets[11]", "color_targets[10]", null, "comp_2pass_separable" },
+                    .{ "color_targets[10]", "color_targets[13]", "color_targets[12]", null, "comp_2pass_separable" },
                 },
             },
         },
@@ -392,13 +392,13 @@
             .unroll = .{
                 .template = "compute_filter_separable",
                 .args = .{
-                    // CONDITION_DOWNSAMPLE, CONDITION_PASS1_2, TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT, FILTER_PARAM
-                    .{ "never", "comp_2pass_separable_cache", "color_targets[3]", "color_targets[2]", "color_targets[3]", "cache" },
-                    .{ "comp_2pass_separable_cache", "comp_2pass_separable_cache", "color_targets[3]", "color_targets[5]", "color_targets[4]", "cache" },
-                    .{ "comp_2pass_separable_cache", "comp_2pass_separable_cache", "color_targets[4]", "color_targets[7]", "color_targets[6]", "cache" },
-                    .{ "comp_2pass_separable_cache", "comp_2pass_separable_cache", "color_targets[6]", "color_targets[9]", "color_targets[8]", "cache" },
-                    .{ "comp_2pass_separable_cache", "comp_2pass_separable_cache", "color_targets[8]", "color_targets[11]", "color_targets[10]", "cache" },
-                    .{ "comp_2pass_separable_cache", "comp_2pass_separable_cache", "color_targets[10]", "color_targets[13]", "color_targets[12]", "cache" },
+                    // TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT, FILTER_PARAM, CONDITION_FILTER,  CONDITION_DOWNSAMPLE
+                    .{ "color_targets[3]", "color_targets[2]", "color_targets[3]", "cache", "comp_2pass_separable_cache", "never" },
+                    .{ "color_targets[3]", "color_targets[5]", "color_targets[4]", "cache", "comp_2pass_separable_cache" },
+                    .{ "color_targets[4]", "color_targets[7]", "color_targets[6]", "cache", "comp_2pass_separable_cache" },
+                    .{ "color_targets[6]", "color_targets[9]", "color_targets[8]", "cache", "comp_2pass_separable_cache" },
+                    .{ "color_targets[8]", "color_targets[11]", "color_targets[10]", "cache", "comp_2pass_separable_cache" },
+                    .{ "color_targets[10]", "color_targets[13]", "color_targets[12]", "cache", "comp_2pass_separable_cache" },
                 },
             },
         },
@@ -437,13 +437,13 @@
             .unroll = .{
                 .template = "fragment_filter_separable_downsample",
                 .args = .{
-                    // CONDITION_DOWNSAMPLE, TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT
-                    .{ "never", "color_targets[3]", "color_targets[2]", "color_targets[3]" },
-                    .{ "frag_3pass_separable", "color_targets[3]", "color_targets[5]", "color_targets[4]" },
-                    .{ "frag_3pass_separable", "color_targets[4]", "color_targets[7]", "color_targets[6]" },
-                    .{ "frag_3pass_separable", "color_targets[6]", "color_targets[9]", "color_targets[8]" },
-                    .{ "frag_3pass_separable", "color_targets[8]", "color_targets[11]", "color_targets[10]" },
-                    .{ "frag_3pass_separable", "color_targets[10]", "color_targets[13]", "color_targets[12]" },
+                    // TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT, CONDITION_DOWNSAMPLE
+                    .{ "color_targets[3]", "color_targets[2]", "color_targets[3]", "never" },
+                    .{ "color_targets[3]", "color_targets[5]", "color_targets[4]" },
+                    .{ "color_targets[4]", "color_targets[7]", "color_targets[6]" },
+                    .{ "color_targets[6]", "color_targets[9]", "color_targets[8]" },
+                    .{ "color_targets[8]", "color_targets[11]", "color_targets[10]" },
+                    .{ "color_targets[10]", "color_targets[13]", "color_targets[12]" },
                 },
             },
         },
@@ -480,12 +480,12 @@
             .unroll = .{
                 .template = "fragment_dual_filter_downsample",
                 .args = .{
-                    // CONDITION, FILTER, TEXTURE_IN, TEXTURE_OUT
-                    .{ "frag_dual_kawase", "kawase", "color_targets[2]", "color_targets[4]" },
-                    .{ "frag_dual_kawase", "kawase", "color_targets[4]", "color_targets[6]" },
-                    .{ "frag_dual_kawase", "kawase", "color_targets[6]", "color_targets[8]" },
-                    .{ "frag_dual_kawase", "kawase", "color_targets[8]", "color_targets[10]" },
-                    .{ "frag_dual_kawase", "kawase", "color_targets[10]", "color_targets[12]" },
+                    // TEXTURE_IN, TEXTURE_OUT, FILTER, CONDITION
+                    .{ "color_targets[2]", "color_targets[4]", "kawase", "frag_dual_kawase" },
+                    .{ "color_targets[4]", "color_targets[6]", "kawase", "frag_dual_kawase" },
+                    .{ "color_targets[6]", "color_targets[8]", "kawase", "frag_dual_kawase" },
+                    .{ "color_targets[8]", "color_targets[10]", "kawase", "frag_dual_kawase" },
+                    .{ "color_targets[10]", "color_targets[12]", "kawase", "frag_dual_kawase" },
                 },
             },
         },
@@ -493,12 +493,12 @@
             .unroll = .{
                 .template = "fragment_dual_filter_upsample",
                 .args = .{
-                    // CONDITION, FILTER, TEXTURE_IN, TEXTURE_OUT
-                    .{ "frag_dual_kawase", "kawase", "color_targets[12]", "color_targets[10]", "" },
-                    .{ "frag_dual_kawase", "kawase", "color_targets[10]", "color_targets[8]", "" },
-                    .{ "frag_dual_kawase", "kawase", "color_targets[8]", "color_targets[6]", "" },
-                    .{ "frag_dual_kawase", "kawase", "color_targets[6]", "color_targets[4]", "" },
-                    .{ "frag_dual_kawase", "kawase", "color_targets[4]", "color_targets[2]", "" },
+                    // TEXTURE_IN, TEXTURE_OUT, FILTER, FILTER_PARAM, CONDITION
+                    .{ "color_targets[12]", "color_targets[10]", "kawase", null, "frag_dual_kawase" },
+                    .{ "color_targets[10]", "color_targets[8]", "kawase", null, "frag_dual_kawase" },
+                    .{ "color_targets[8]", "color_targets[6]", "kawase", null, "frag_dual_kawase" },
+                    .{ "color_targets[6]", "color_targets[4]", "kawase", null, "frag_dual_kawase" },
+                    .{ "color_targets[4]", "color_targets[2]", "kawase", null, "frag_dual_kawase" },
                 },
             },
         },
@@ -507,12 +507,12 @@
             .unroll = .{
                 .template = "fragment_dual_filter_downsample",
                 .args = .{
-                    // CONDITION, FILTER, TEXTURE_IN, TEXTURE_OUT
-                    .{ "frag_jimenez", "jimenez", "color_targets[2]", "color_targets[4]" },
-                    .{ "frag_jimenez", "jimenez", "color_targets[4]", "color_targets[6]" },
-                    .{ "frag_jimenez", "jimenez", "color_targets[6]", "color_targets[8]" },
-                    .{ "frag_jimenez", "jimenez", "color_targets[8]", "color_targets[10]" },
-                    .{ "frag_jimenez", "jimenez", "color_targets[10]", "color_targets[12]" },
+                    // TEXTURE_IN, TEXTURE_OUT, FILTER, CONDITION
+                    .{ "color_targets[2]", "color_targets[4]", "jimenez", "frag_jimenez" },
+                    .{ "color_targets[4]", "color_targets[6]", "jimenez", "frag_jimenez" },
+                    .{ "color_targets[6]", "color_targets[8]", "jimenez", "frag_jimenez" },
+                    .{ "color_targets[8]", "color_targets[10]", "jimenez", "frag_jimenez" },
+                    .{ "color_targets[10]", "color_targets[12]", "jimenez", "frag_jimenez" },
                 },
             },
         },
@@ -520,12 +520,12 @@
             .unroll = .{
                 .template = "fragment_dual_filter_upsample",
                 .args = .{
-                    // CONDITION, FILTER, TEXTURE_IN, TEXTURE_OUT
-                    .{ "frag_jimenez", "jimenez", "color_targets[12]", "color_targets[10]", "pixel_scale=2" },
-                    .{ "frag_jimenez", "jimenez", "color_targets[10]", "color_targets[8]", "pixel_scale=2" },
-                    .{ "frag_jimenez", "jimenez", "color_targets[8]", "color_targets[6]", "pixel_scale=2" },
-                    .{ "frag_jimenez", "jimenez", "color_targets[6]", "color_targets[4]", "pixel_scale=2" },
-                    .{ "frag_jimenez", "jimenez", "color_targets[4]", "color_targets[2]", "pixel_scale=2" },
+                    // TEXTURE_IN, TEXTURE_OUT, FILTER, FILTER_PARAM, CONDITION
+                    .{ "color_targets[12]", "color_targets[10]", "jimenez", "pixel_scale=2", "frag_jimenez" },
+                    .{ "color_targets[10]", "color_targets[8]", "jimenez", "pixel_scale=2", "frag_jimenez" },
+                    .{ "color_targets[8]", "color_targets[6]", "jimenez", "pixel_scale=2", "frag_jimenez" },
+                    .{ "color_targets[6]", "color_targets[4]", "jimenez", "pixel_scale=2", "frag_jimenez" },
+                    .{ "color_targets[4]", "color_targets[2]", "jimenez", "pixel_scale=2", "frag_jimenez" },
                 },
             },
         },
