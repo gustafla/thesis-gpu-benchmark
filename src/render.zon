@@ -32,7 +32,11 @@
     .templates = .{
         .{ // Prefilter
             .name = "prefilter",
-            .params = .{ "CONDITION", "TEXTURE_OUT" },
+            .params = .{
+                .{ .name = "TEXTURE_IN" },
+                .{ .name = "TEXTURE_OUT" },
+                .{ .name = "CONDITION" },
+            },
             .passes = .{.{ .render = .{
                 .require_all_tags = .{"CONDITION"},
                 .drawcalls = .{.{
@@ -41,7 +45,7 @@
                         .params = .{"prefilter"},
                     } } } }},
                     .fragment_samplers = .{
-                        .{ .texture = "color_targets[1]", .sampler = "nearest" },
+                        .{ .texture = "TEXTURE_IN", .sampler = "nearest" },
                     },
                 }},
                 .color_targets = .{.{ .texture = "TEXTURE_OUT" }},
@@ -51,11 +55,12 @@
         .{ // Compute naive convolution
             .name = "compute_filter_naive",
             .params = .{
-                "CONDITION_DOWNSAMPLE",
-                "CONDITION_PASS1",
-                "TEXTURE_IN",
-                "TEXTURE_MID",
-                "TEXTURE_OUT",
+                .{ .name = "TEXTURE_IN" },
+                .{ .name = "TEXTURE_MID" },
+                .{ .name = "TEXTURE_OUT" },
+                .{ .name = "FILTER_PARAM" },
+                .{ .name = "CONDITION_FILTER" },
+                .{ .name = "CONDITION_DOWNSAMPLE", .default = "CONDITION_FILTER" },
             },
             .passes = .{
                 .{ .render = .{
@@ -72,11 +77,11 @@
                     .color_targets = .{.{ .texture = "TEXTURE_MID" }},
                 } },
                 .{ .compute = .{
-                    .require_all_tags = .{"CONDITION_PASS1"},
+                    .require_all_tags = .{"CONDITION_FILTER"},
                     .dispatches = .{.{
                         .comp = .{
                             .file = "bloom.glsl",
-                            .params = .{"naive"},
+                            .params = .{ "naive", "FILTER_PARAM" },
                         },
                         .threads = .{ .x = 8, .y = 8 },
                         .groups = .{ .p = .{ .texture_size = "TEXTURE_OUT" }, .q = .threads },
@@ -90,12 +95,12 @@
         .{ // Compute separable convolution
             .name = "compute_filter_separable",
             .params = .{
-                "CONDITION_DOWNSAMPLE",
-                "CONDITION_PASS1_2",
-                "TEXTURE_IN",
-                "TEXTURE_MID",
-                "TEXTURE_OUT",
-                "FILTER_PARAM",
+                .{ .name = "CONDITION_DOWNSAMPLE" },
+                .{ .name = "CONDITION_PASS1_2" },
+                .{ .name = "TEXTURE_IN" },
+                .{ .name = "TEXTURE_MID" },
+                .{ .name = "TEXTURE_OUT" },
+                .{ .name = "FILTER_PARAM" },
             },
             .passes = .{
                 .{ .render = .{
@@ -142,7 +147,10 @@
 
         .{ // Fragment naive convolution
             .name = "fragment_filter_naive",
-            .params = .{ "TEXTURE_IN", "TEXTURE_OUT" },
+            .params = .{
+                .{ .name = "TEXTURE_IN" },
+                .{ .name = "TEXTURE_OUT" },
+            },
             .passes = .{
                 .{ .render = .{
                     .require_all_tags = .{"frag_naive"},
@@ -162,7 +170,11 @@
 
         .{ // Fragment separable convolution
             .name = "fragment_filter_separable",
-            .params = .{ "TEXTURE_IN", "TEXTURE_MID", "TEXTURE_OUT" },
+            .params = .{
+                .{ .name = "TEXTURE_IN" },
+                .{ .name = "TEXTURE_MID" },
+                .{ .name = "TEXTURE_OUT" },
+            },
             .passes = .{
                 .{ .render = .{
                     .require_all_tags = .{"frag_2pass_separable"},
@@ -195,7 +207,12 @@
 
         .{ // Fragment separable with downsampling
             .name = "fragment_filter_separable_downsample",
-            .params = .{ "CONDITION_DOWNSAMPLE", "TEXTURE_IN", "TEXTURE_MID", "TEXTURE_OUT" },
+            .params = .{
+                .{ .name = "CONDITION_DOWNSAMPLE" },
+                .{ .name = "TEXTURE_IN" },
+                .{ .name = "TEXTURE_MID" },
+                .{ .name = "TEXTURE_OUT" },
+            },
             .passes = .{
                 .{ .render = .{
                     .require_all_tags = .{"CONDITION_DOWNSAMPLE"},
@@ -241,7 +258,12 @@
 
         .{ // Fragment dual filter downsampling
             .name = "fragment_dual_filter_downsample",
-            .params = .{ "CONDITION", "FILTER", "TEXTURE_IN", "TEXTURE_OUT" },
+            .params = .{
+                .{ .name = "CONDITION" },
+                .{ .name = "FILTER" },
+                .{ .name = "TEXTURE_IN" },
+                .{ .name = "TEXTURE_OUT" },
+            },
             .passes = .{
                 .{ .render = .{
                     .require_all_tags = .{"CONDITION"},
@@ -261,7 +283,13 @@
 
         .{ // Fragment dual filter upsampling
             .name = "fragment_dual_filter_upsample",
-            .params = .{ "CONDITION", "FILTER", "TEXTURE_IN", "TEXTURE_OUT", "FILTER_PARAM" },
+            .params = .{
+                .{ .name = "CONDITION" },
+                .{ .name = "FILTER" },
+                .{ .name = "TEXTURE_IN" },
+                .{ .name = "TEXTURE_OUT" },
+                .{ .name = "FILTER_PARAM" },
+            },
             .passes = .{
                 .{ .render = .{
                     .require_all_tags = .{"CONDITION"},
@@ -314,18 +342,18 @@
             .unroll = .{
                 .template = "prefilter",
                 .args = .{
-                    // CONDITION, TEXTURE_OUT
+                    // TEXTURE_IN, TEXTURE_OUT, CONDITION
                     // Even index start
-                    .{ "comp_naive", "color_targets[2]" },
-                    .{ "comp_1pass_separable_cache", "color_targets[2]" },
-                    .{ "frag_naive", "color_targets[2]" },
-                    .{ "frag_dual_kawase", "color_targets[2]" },
-                    .{ "frag_jimenez", "color_targets[2]" },
+                    .{ "color_targets[1]", "color_targets[2]", "comp_naive" },
+                    .{ "color_targets[1]", "color_targets[2]", "comp_1pass_separable_cache" },
+                    .{ "color_targets[1]", "color_targets[2]", "frag_naive" },
+                    .{ "color_targets[1]", "color_targets[2]", "frag_dual_kawase" },
+                    .{ "color_targets[1]", "color_targets[2]", "frag_jimenez" },
                     // Odd index start
-                    .{ "comp_2pass_separable", "color_targets[3]" },
-                    .{ "comp_2pass_separable_cache", "color_targets[3]" },
-                    .{ "frag_2pass_separable", "color_targets[3]" },
-                    .{ "frag_3pass_separable", "color_targets[3]" },
+                    .{ "color_targets[1]", "color_targets[3]", "comp_2pass_separable" },
+                    .{ "color_targets[1]", "color_targets[3]", "comp_2pass_separable_cache" },
+                    .{ "color_targets[1]", "color_targets[3]", "frag_2pass_separable" },
+                    .{ "color_targets[1]", "color_targets[3]", "frag_3pass_separable" },
                 },
             },
         },
@@ -334,13 +362,13 @@
             .unroll = .{
                 .template = "compute_filter_naive",
                 .args = .{
-                    // CONDITION_DOWNSAMPLE, CONDITION_PASS1, TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT
-                    .{ "never", "comp_naive", "color_targets[2]", "color_targets[2]", "color_targets[3]" },
-                    .{ "comp_naive", "comp_naive", "color_targets[3]", "color_targets[5]", "color_targets[4]" },
-                    .{ "comp_naive", "comp_naive", "color_targets[4]", "color_targets[7]", "color_targets[6]" },
-                    .{ "comp_naive", "comp_naive", "color_targets[6]", "color_targets[9]", "color_targets[8]" },
-                    .{ "comp_naive", "comp_naive", "color_targets[8]", "color_targets[11]", "color_targets[10]" },
-                    .{ "comp_naive", "comp_naive", "color_targets[10]", "color_targets[13]", "color_targets[12]" },
+                    // TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT, FILTER_PARAM, CONDITION_FILTER, CONDITION_DOWNSAMPLE
+                    .{ "color_targets[2]", "color_targets[2]", "color_targets[3]", null, "comp_naive", "never" },
+                    .{ "color_targets[3]", "color_targets[5]", "color_targets[4]", null, "comp_naive" },
+                    .{ "color_targets[4]", "color_targets[7]", "color_targets[6]", null, "comp_naive" },
+                    .{ "color_targets[6]", "color_targets[9]", "color_targets[8]", null, "comp_naive" },
+                    .{ "color_targets[8]", "color_targets[11]", "color_targets[10]", null, "comp_naive" },
+                    .{ "color_targets[10]", "color_targets[13]", "color_targets[12]", null, "comp_naive" },
                 },
             },
         },
