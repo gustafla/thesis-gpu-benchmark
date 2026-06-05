@@ -462,10 +462,24 @@
                     .{ "color_targets[10]", "color_targets[8]", "kawase", null, "frag_dual_kawase" },
                     .{ "color_targets[8]", "color_targets[6]", "kawase", null, "frag_dual_kawase" },
                     .{ "color_targets[6]", "color_targets[4]", "kawase", null, "frag_dual_kawase" },
-                    .{ "color_targets[4]", "color_targets[2]", "kawase", null, "frag_dual_kawase" },
                 },
             },
         },
+        .{ .render = .{
+            .require_all_tags = .{"frag_dual_kawase"},
+            .drawcalls = .{.{
+                .pipelines = .{.{
+                    .shader = .{ .stages = .{ .frag = .{
+                        .file = "bloom.glsl",
+                        .params = .{ "kawase", "up" },
+                    } } },
+                }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[4]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .texture = "color_targets[2]" }},
+        } },
 
         .{ // Fragment dual jimenez filter chain
             .unroll = .{
@@ -489,10 +503,24 @@
                     .{ "color_targets[10]", "color_targets[8]", "jimenez", "pixel_scale=2", "frag_jimenez" },
                     .{ "color_targets[8]", "color_targets[6]", "jimenez", "pixel_scale=2", "frag_jimenez" },
                     .{ "color_targets[6]", "color_targets[4]", "jimenez", "pixel_scale=2", "frag_jimenez" },
-                    .{ "color_targets[4]", "color_targets[2]", "jimenez", "pixel_scale=2", "frag_jimenez" },
                 },
             },
         },
+        .{ .render = .{
+            .require_all_tags = .{"frag_jimenez"},
+            .drawcalls = .{.{
+                .pipelines = .{.{
+                    .shader = .{ .stages = .{ .frag = .{
+                        .file = "bloom.glsl",
+                        .params = .{ "jimenez", "up", "pixel_scale=2" },
+                    } } },
+                }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[4]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .texture = "color_targets[2]" }},
+        } },
 
         // Post processing and output
         .{ .render = .{
