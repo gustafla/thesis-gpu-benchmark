@@ -160,7 +160,6 @@ layout(set = 2, binding = 1) uniform sampler2D u_input_texture1;
 layout(set = 2, binding = 2) uniform sampler2D u_input_texture2;
 layout(set = 2, binding = 3) uniform sampler2D u_input_texture3;
 layout(set = 2, binding = 4) uniform sampler2D u_input_texture4;
-layout(set = 2, binding = 5) uniform sampler2D u_input_texture5;
 
 void main() {
     vec3 color = texture(u_input_texture, in_uv).rgb;
@@ -168,7 +167,6 @@ void main() {
     color += texture(u_input_texture2, in_uv).rgb;
     color += texture(u_input_texture3, in_uv).rgb;
     color += texture(u_input_texture4, in_uv).rgb;
-    color += texture(u_input_texture5, in_uv).rgb;
     out_color = vec4(color, 1.0);
 }
 #endif // COMPOSITE

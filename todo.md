@@ -6,4 +6,4 @@
   - Should have worse memory bandwidth and worse ALU, reads and works on full-resolution data
 - [ ] Add independend dilated convolution (parallel sum of gaussians)
   - Should have worse memory bandwidth, reads full-resolution data
-- [ ] Make convolutions start at half-res
+- [X] Make convolutions start at half-res
