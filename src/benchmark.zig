@@ -2,7 +2,9 @@ const std = @import("std");
 const Io = std.Io;
 const Allocator = std.mem.Allocator;
 
-const timeline = @import("timeline.zon");
+const engine = @import("engine");
+const schema = engine.schema;
+const script = @import("script");
 
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
@@ -19,7 +21,7 @@ pub fn main(init: std.process.Init) !void {
     const results_dir = try Io.Dir.cwd().createDirPathOpen(io, results_path, .{});
     defer results_dir.close(io);
 
-    inline for (timeline.tags) |tag| {
+    inline for (script.config.timeline.tags) |tag| {
         if (tag.t != .seq) break;
         const run = try std.process.run(arena, io, .{
             .argv = &.{
@@ -59,7 +61,7 @@ fn processSuccess(
     arena: Allocator,
     results_dir: Io.Dir,
     run: std.process.RunResult,
-    tag_name: []const u8,
+    comptime tag_name: []const u8,
     warmup_seconds: f64,
 ) !void {
     var write_buffer: [1024]u8 = undefined;
@@ -114,6 +116,146 @@ fn processSuccess(
         "# WarmupRows: {}\n",
         .{warmup_rows},
     ) catch return file_writer.err.?;
-    file_writer.interface.writeAll(run.stdout) catch return file_writer.err.?;
+    lines = std.mem.splitScalar(u8, run.stdout, '\n');
+    while (lines.next()) |line| {
+        if (line.len == 0 or line[0] == '#') {
+            file_writer.interface.print("{s}\n", .{line}) catch return file_writer.err.?;
+        } else {
+            var fields = std.mem.splitScalar(u8, line, ',');
+            const pass = fields.next() orelse return error.NoPassIndex;
+            const i = try std.fmt.parseInt(u64, pass, 10);
+            var buf1: [1024]u8 = undefined;
+            var buf2: [1024]u8 = undefined;
+            const name = passName(&buf1, i, tag_name);
+            file_writer.interface.print("\"{s}\",{s}\n", .{
+                cleanName(&buf2, name),
+                line,
+            }) catch return file_writer.err.?;
+        }
+    }
     file_writer.interface.flush() catch return file_writer.err.?;
+}
+
+fn cleanName(buffer: []u8, name: []const u8) []const u8 {
+    var writer = std.Io.Writer.fixed(buffer);
+    const no_spv = std.mem.cutSuffix(u8, name, ".spv") orelse name;
+    var iterator = std.mem.splitScalar(u8, no_spv, ',');
+    writer.writeAll(iterator.next().?) catch unreachable;
+    while (iterator.next()) |str| {
+        // Skip numbers
+        for (str) |c| {
+            if (!std.ascii.isDigit(c)) break;
+        } else continue;
+        writer.print(" {s}", .{str}) catch unreachable;
+    }
+    return writer.buffered();
+}
+
+fn passName(buffer: []u8, i: u64, comptime tag: []const u8) []const u8 {
+    const passes = comptime filterPasses(unrollPasses(script.config.render), tag);
+    if (i == passes.len) return std.fmt.bufPrint(buffer, "{s}", .{"final_scaling"}) catch unreachable;
+    const pass = passes[i];
+    switch (pass) {
+        .render => |rpass| {
+            std.debug.assert(rpass.drawcalls.len > 0);
+            std.debug.assert(rpass.drawcalls[0].pipelines.len == 1);
+            std.debug.assert(rpass.drawcalls[0].pipelines[0].variants.len == 0);
+            const stages = rpass.drawcalls[0].pipelines[0].shader.resolve();
+            const frag_spv_filename = std.fmt.bufPrint(buffer, "{f}", .{
+                stages.frag.spvFilenameFmt(.fragment, null, &.{}),
+            }) catch @panic("Filename too long");
+            return frag_spv_filename;
+        },
+        .compute => |cpass| {
+            std.debug.assert(cpass.dispatches.len == 1);
+            std.debug.assert(cpass.dispatches[0].variants.len == 0);
+            const disp = cpass.dispatches[0];
+            const comp = disp.comp;
+            const comp_spv_filename = std.fmt.bufPrint(buffer, "{f}", .{
+                comp.spvFilenameFmt(.compute, disp.threads, &.{}),
+            }) catch @panic("Filename too long");
+            return comp_spv_filename;
+        },
+        .unroll => unreachable,
+    }
+}
+
+fn unrollPasses(comptime config: schema.Render) []const schema.Render.Pass {
+    var num_passes = 0;
+    for (config.passes) |pass| {
+        switch (pass) {
+            .unroll => |unroll| {
+                const tmpl = schema.template.get(
+                    schema.Render.Pass,
+                    config.templates,
+                    unroll.template,
+                );
+                num_passes += unroll.args.len * tmpl.passes.len;
+            },
+            else => num_passes += 1,
+        }
+    }
+
+    @setEvalBranchQuota(1024 * config.passes.len * config.templates.len);
+    var unrolled_passes: [num_passes]schema.Render.Pass = undefined;
+    var i = 0;
+
+    for (config.passes) |pass| {
+        switch (pass) {
+            .unroll => |unroll| {
+                const template = schema.template.get(
+                    schema.Render.Pass,
+                    config.templates,
+                    unroll.template,
+                );
+                const params = template.params;
+                for (unroll.args) |args| {
+                    for (template.passes) |tpass| {
+                        unrolled_passes[i] = schema.template.applySubstitution(
+                            schema.template.SliceAllocatorComptime,
+                            tpass,
+                            params,
+                            args,
+                        ) catch unreachable;
+                        i += 1;
+                    }
+                }
+            },
+            else => {
+                unrolled_passes[i] = pass;
+                i += 1;
+            },
+        }
+    }
+
+    const final_passes = unrolled_passes;
+    return &final_passes;
+}
+
+fn filterPasses(
+    comptime passes: []const schema.Render.Pass,
+    comptime tag: []const u8,
+) []const schema.Render.Pass {
+    var filtered_passes: [passes.len]schema.Render.Pass = undefined;
+    var i = 0;
+
+    for (passes) |pass| {
+        const require_all_tags, const require_any_tags = switch (pass) {
+            .unroll => unreachable,
+            inline else => |p| .{ p.require_all_tags, p.require_any_tags },
+        };
+        if (require_all_tags.len > 1) continue;
+        if (require_all_tags.len == 1 and !std.mem.eql(u8, require_all_tags[0], tag)) continue;
+        if (require_any_tags.len > 0) {
+            for (require_any_tags) |req_tag| {
+                if (std.mem.eql(u8, req_tag, tag)) break;
+            } else continue;
+        }
+
+        filtered_passes[i] = pass;
+        i += 1;
+    }
+
+    const final_passes = filtered_passes[0..i].*;
+    return &final_passes;
 }

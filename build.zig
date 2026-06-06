@@ -49,6 +49,10 @@ pub fn build(b: *std.Build) !void {
         .root_source_file = b.path("src/benchmark.zig"),
         .target = options.target,
         .optimize = options.optimize,
+        .imports = &.{
+            .{ .name = "engine", .module = engine_dep.module("engine") },
+            .{ .name = "script", .module = script_mod },
+        },
     });
     const benchmark_exe = b.addExecutable(.{
         .name = "benchmark",
