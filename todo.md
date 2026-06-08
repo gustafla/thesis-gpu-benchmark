@@ -1,9 +1,0 @@
-- [X] Benchmark warm-up
-- [X] Use only first .seq tags as the test cases
-- [ ] Finish the compute separable 1-pass cache implementation
-- [ ] Rename dual kawase to marius bjorge
-- [ ] Add dense reference convolution
-  - Should have worse memory bandwidth and worse ALU, reads and works on full-resolution data
-- [ ] Add independend dilated convolution (parallel sum of gaussians)
-  - Should have worse memory bandwidth, reads full-resolution data
-- [X] Make convolutions start at half-res
