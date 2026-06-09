@@ -36,7 +36,7 @@ void main() {
 
     imageStore(out_texture, texel_coord, sum);
 }
-#endif // NO_CACHE and NAIVE
+#endif // NOT CACHE and NAIVE
 
 #if !defined(CACHE) && (defined (HORIZONTAL) || defined(VERTICAL))
 void main() {
@@ -64,7 +64,7 @@ void main() {
 
     imageStore(out_texture, texel_coord, sum);
 }
-#endif // NO_CACHE and (HORIZONTAL or VERTICAL)
+#endif // NOT CACHE and (HORIZONTAL or VERTICAL)
 
 #if defined(CACHE) && (defined(HORIZONTAL) || defined(VERTICAL))
 #if (DIM_X != DIM_Y || DIM_Z != 1)
@@ -117,6 +117,21 @@ void main() {
     imageStore(out_texture, texel_coord, sum);
 }
 #endif // CACHE and (HORIZONTAL or VERTICAL)
+
+#if defined(CACHE) && !(defined(HORIZONTAL) || defined(VERTICAL))
+#if (DIM_X != DIM_Y || DIM_Z != 1)
+#error "This shader must be compiled for a square workgroup"
+#endif
+
+const int cache_s = DIM_Y + M * 2;
+const int cache_l = DIM_X + M * 2;
+shared vec4 cache[cache_s][cache_l];
+
+void main() {
+    const ivec2 texel_coord = ivec2(gl_GlobalInvocationID.xy);
+    imageStore(out_texture, texel_coord, vec4(1.0));
+}
+#endif // CACHE and NOT (HORIZONTAL or VERTICAL)
 #endif // COMPUTE
 
 #if defined(FRAGMENT)

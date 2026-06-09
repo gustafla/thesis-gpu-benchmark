@@ -81,3 +81,19 @@ void main() {
     out_color = vec4(reinhard(max(color, 0.)), 1.);
 }
 #endif // FRAGMENT and POST
+
+#if defined(FRAGMENT) && defined(POINT_IMAGE)
+layout(location = 0) in vec2 in_uv;
+
+layout(location = 0) out vec4 out_color;
+
+#include <color.glsl>
+
+void main() {
+    if (gl_FragCoord.x == 0 && gl_FragCoord.y == 0) {
+        out_color = vec4(1.0);
+    } else {
+        out_color = vec4(vec3(0.0), 1.0);
+    }
+}
+#endif // FRAGMENT and POST
