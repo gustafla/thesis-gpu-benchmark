@@ -31,7 +31,7 @@
     },
     .templates = .{
         .{ // Compute naive convolution
-            .name = "compute_filter_naive",
+            .name = "compute_filter_1pass",
             .params = .{
                 .{ .name = "TEXTURE_IN" },
                 .{ .name = "TEXTURE_MID" },
@@ -331,7 +331,7 @@
 
         .{ // Compute naive convolution filter chain
             .unroll = .{
-                .template = "compute_filter_naive",
+                .template = "compute_filter_1pass",
                 .args = .{
                     // TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT, FILTER_PARAM, CONDITION_FILTER, CONDITION_DOWNSAMPLE
                     .{ "color_targets[2]", "color_targets[5]", "color_targets[4]", null, "comp_naive" },
@@ -437,7 +437,7 @@
                     .{ .texture = "color_targets[12]", .sampler = "linear" },
                 },
             }},
-            .color_targets = .{.{ .texture = "color_targets[2]" }},
+            .color_targets = .{.{ .texture = "color_targets[5]" }},
         } },
 
         .{ // Fragment dual kawase filter chain
@@ -445,8 +445,8 @@
                 .template = "fragment_dual_filter_downsample",
                 .args = .{
                     // TEXTURE_IN, TEXTURE_OUT, FILTER, CONDITION
-                    .{ "color_targets[2]", "color_targets[4]", "kawase", "frag_dual_kawase" },
-                    .{ "color_targets[4]", "color_targets[6]", "kawase", "frag_dual_kawase" },
+                    .{ "color_targets[2]", "color_targets[5]", "kawase", "frag_dual_kawase" },
+                    .{ "color_targets[5]", "color_targets[6]", "kawase", "frag_dual_kawase" },
                     .{ "color_targets[6]", "color_targets[8]", "kawase", "frag_dual_kawase" },
                     .{ "color_targets[8]", "color_targets[10]", "kawase", "frag_dual_kawase" },
                     .{ "color_targets[10]", "color_targets[12]", "kawase", "frag_dual_kawase" },
@@ -461,33 +461,18 @@
                     .{ "color_targets[12]", "color_targets[10]", "kawase", null, "frag_dual_kawase" },
                     .{ "color_targets[10]", "color_targets[8]", "kawase", null, "frag_dual_kawase" },
                     .{ "color_targets[8]", "color_targets[6]", "kawase", null, "frag_dual_kawase" },
-                    .{ "color_targets[6]", "color_targets[4]", "kawase", null, "frag_dual_kawase" },
+                    .{ "color_targets[6]", "color_targets[5]", "kawase", null, "frag_dual_kawase" },
                 },
             },
         },
-        .{ .render = .{
-            .require_all_tags = .{"frag_dual_kawase"},
-            .drawcalls = .{.{
-                .pipelines = .{.{
-                    .shader = .{ .stages = .{ .frag = .{
-                        .file = "bloom.glsl",
-                        .params = .{ "kawase", "up" },
-                    } } },
-                }},
-                .fragment_samplers = .{
-                    .{ .texture = "color_targets[4]", .sampler = "linear" },
-                },
-            }},
-            .color_targets = .{.{ .texture = "color_targets[2]" }},
-        } },
 
         .{ // Fragment dual jimenez filter chain
             .unroll = .{
                 .template = "fragment_dual_filter_downsample",
                 .args = .{
                     // TEXTURE_IN, TEXTURE_OUT, FILTER, CONDITION
-                    .{ "color_targets[2]", "color_targets[4]", "jimenez", "frag_jimenez" },
-                    .{ "color_targets[4]", "color_targets[6]", "jimenez", "frag_jimenez" },
+                    .{ "color_targets[2]", "color_targets[5]", "jimenez", "frag_jimenez" },
+                    .{ "color_targets[5]", "color_targets[6]", "jimenez", "frag_jimenez" },
                     .{ "color_targets[6]", "color_targets[8]", "jimenez", "frag_jimenez" },
                     .{ "color_targets[8]", "color_targets[10]", "jimenez", "frag_jimenez" },
                     .{ "color_targets[10]", "color_targets[12]", "jimenez", "frag_jimenez" },
@@ -502,25 +487,10 @@
                     .{ "color_targets[12]", "color_targets[10]", "jimenez", "pixel_scale=2", "frag_jimenez" },
                     .{ "color_targets[10]", "color_targets[8]", "jimenez", "pixel_scale=2", "frag_jimenez" },
                     .{ "color_targets[8]", "color_targets[6]", "jimenez", "pixel_scale=2", "frag_jimenez" },
-                    .{ "color_targets[6]", "color_targets[4]", "jimenez", "pixel_scale=2", "frag_jimenez" },
+                    .{ "color_targets[6]", "color_targets[5]", "jimenez", "pixel_scale=2", "frag_jimenez" },
                 },
             },
         },
-        .{ .render = .{
-            .require_all_tags = .{"frag_jimenez"},
-            .drawcalls = .{.{
-                .pipelines = .{.{
-                    .shader = .{ .stages = .{ .frag = .{
-                        .file = "bloom.glsl",
-                        .params = .{ "jimenez", "up", "pixel_scale=2" },
-                    } } },
-                }},
-                .fragment_samplers = .{
-                    .{ .texture = "color_targets[4]", .sampler = "linear" },
-                },
-            }},
-            .color_targets = .{.{ .texture = "color_targets[2]" }},
-        } },
 
         // Post processing and output
         .{ .render = .{
@@ -534,7 +504,7 @@
                     }},
                     .fragment_samplers = .{
                         .{ .texture = "color_targets[1]", .sampler = "nearest" },
-                        .{ .texture = "color_targets[2]", .sampler = "nearest" },
+                        .{ .texture = "color_targets[5]", .sampler = "linear" },
                     },
                 },
                 .{
