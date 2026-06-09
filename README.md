@@ -118,11 +118,13 @@ The CSV data uses the following schema:
 
 | Column Index | Field Name | Data Type | Description |
 | :--- | :--- | :--- | :--- |
-| **0** | `PassDescription` | `string` | A description of the primary shader that was run in the pass. |
-| **1** | `PassIndex` | `integer` | Sequential index to the **tag**-culled `src/render.zon` pass list. [See below](#srcrenderzon). |
-| **2** | `StartTicks` | `uint64` | Raw counter ticks at the start of pass execution on the GPU. |
-| **3** | `EndTicks` | `uint64` | Raw counter ticks at the end of pass execution on the GPU. |
-| **4** | `DurationNanos` | `float` | Pass start to end duration in nanoseconds. |
+| **0** | `TargetP` | `uint32` | The pass output resolution scale (numerator). |
+| **1** | `TargetQ` | `uint32` | The pass output resolution scale (denominator). |
+| **2** | `PassDescription` | `string` | A description of the primary shader that was run in the pass. |
+| **3** | `PassIndex` | `integer` | Sequential index to the **tag**-culled `src/render.zon` pass list. [See below](#srcrenderzon). |
+| **4** | `StartTicks` | `uint64` | Raw counter ticks at the start of pass execution on the GPU. |
+| **5** | `EndTicks` | `uint64` | Raw counter ticks at the end of pass execution on the GPU. |
+| **6** | `DurationNanos` | `float` | Pass start to end duration in nanoseconds. |
 
 The initial rows contain per-run constants in comments, formatted `# [Field]: [value]`:
 * `# WarmupDuration`: The total warm-up duration in nanoseconds.

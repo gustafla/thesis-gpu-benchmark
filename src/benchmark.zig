@@ -126,9 +126,11 @@ fn processSuccess(
             const i = try std.fmt.parseInt(u64, pass, 10);
             var buf1: [1024]u8 = undefined;
             var buf2: [1024]u8 = undefined;
-            const name = passName(&buf1, i, tag_name);
-            file_writer.interface.print("\"{s}\",{s}\n", .{
-                cleanName(&buf2, name),
+            const desc = passDescription(&buf1, i, tag_name);
+            file_writer.interface.print("{},{},\"{s}\",{s}\n", .{
+                desc.p,
+                desc.q,
+                cleanName(&buf2, desc.name),
                 line,
             }) catch return file_writer.err.?;
         }
@@ -171,36 +173,42 @@ fn resolveRes(pass: anytype, comptime out_field: []const u8) struct { u32, u32 }
     return .{ 1, 1 };
 }
 
-fn passName(buffer: []u8, i: u64, comptime tag: []const u8) []const u8 {
+const PassDescription = struct {
+    name: []const u8,
+    p: u32 = 1,
+    q: u32 = 1,
+};
+
+fn passDescription(buffer: []u8, i: u64, comptime tag: []const u8) PassDescription {
     const passes = comptime filterPasses(unrollPasses(script.config.render), tag);
-    if (i == passes.len) return std.fmt.bufPrint(buffer, "{s}", .{"final_scaling"}) catch unreachable;
+    if (i == passes.len) return .{ .name = "final_scaling" };
     const pass = passes[i];
     switch (pass) {
         .render => |rpass| {
             std.debug.assert(rpass.drawcalls.len > 0);
             std.debug.assert(rpass.drawcalls[0].pipelines.len == 1);
             std.debug.assert(rpass.drawcalls[0].pipelines[0].variants.len == 0);
-            const p, const q = resolveRes(rpass, "color_targets");
             const stages = rpass.drawcalls[0].pipelines[0].shader.resolve();
             const frag_spv_filename = std.fmt.bufPrint(
                 buffer,
-                "({}:{}) {f}",
-                .{ p, q, stages.frag.spvFilenameFmt(.fragment, null, &.{}) },
+                "{f}",
+                .{stages.frag.spvFilenameFmt(.fragment, null, &.{})},
             ) catch @panic("Filename too long");
-            return frag_spv_filename;
+            const p, const q = resolveRes(rpass, "color_targets");
+            return .{ .name = frag_spv_filename, .p = p, .q = q };
         },
         .compute => |cpass| {
             std.debug.assert(cpass.dispatches.len == 1);
             std.debug.assert(cpass.dispatches[0].variants.len == 0);
-            const p, const q = resolveRes(cpass, "readwrite_storage_textures");
             const disp = cpass.dispatches[0];
             const comp = disp.comp;
             const comp_spv_filename = std.fmt.bufPrint(
                 buffer,
-                "({}:{}) {f}",
-                .{ p, q, comp.spvFilenameFmt(.compute, disp.threads, &.{}) },
+                "{f}",
+                .{comp.spvFilenameFmt(.compute, disp.threads, &.{})},
             ) catch @panic("Filename too long");
-            return comp_spv_filename;
+            const p, const q = resolveRes(cpass, "readwrite_storage_textures");
+            return .{ .name = comp_spv_filename, .p = p, .q = q };
         },
         .unroll => unreachable,
     }
