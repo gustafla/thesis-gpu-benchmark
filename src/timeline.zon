@@ -7,8 +7,8 @@
         .{ .name = "frag_naive", .duration = 10, .t = .seq },
         .{ .name = "frag_2pass_separable", .duration = 10, .t = .seq },
         .{ .name = "frag_3pass_separable", .duration = 10, .t = .seq },
-        .{ .name = "frag_dual_kawase", .duration = 10, .t = .seq },
-        .{ .name = "frag_jimenez", .duration = 10, .t = .seq },
+        .{ .name = "frag_dual_bjorge", .duration = 10, .t = .seq },
+        .{ .name = "frag_dual_jimenez", .duration = 10, .t = .seq },
     },
     .text = .{
         .fonts = .{.{

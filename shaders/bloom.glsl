@@ -238,7 +238,7 @@ void main() {
 }
 #endif // HORIZONTAL or VERTICAL
 
-#if defined(KAWASE)
+#if defined(BJORGE)
 void main() {
     vec2 o = 0.5 / textureSize(u_input_texture, 0);
 
@@ -267,7 +267,7 @@ void main() {
 
     out_color = sum * weight;
 }
-#endif // KAWASE
+#endif // BJORGE
 
 #if defined(JIMENEZ)
 void main() {

@@ -459,11 +459,11 @@
                 .template = "fragment_dual_filter_downsample",
                 .args = .{
                     // TEXTURE_IN, TEXTURE_OUT, FILTER, CONDITION
-                    .{ "color_targets[2]", "color_targets[5]", "kawase", "frag_dual_kawase" },
-                    .{ "color_targets[5]", "color_targets[6]", "kawase", "frag_dual_kawase" },
-                    .{ "color_targets[6]", "color_targets[8]", "kawase", "frag_dual_kawase" },
-                    .{ "color_targets[8]", "color_targets[10]", "kawase", "frag_dual_kawase" },
-                    .{ "color_targets[10]", "color_targets[12]", "kawase", "frag_dual_kawase" },
+                    .{ "color_targets[2]", "color_targets[5]", "bjorge", "frag_dual_bjorge" },
+                    .{ "color_targets[5]", "color_targets[6]", "bjorge", "frag_dual_bjorge" },
+                    .{ "color_targets[6]", "color_targets[8]", "bjorge", "frag_dual_bjorge" },
+                    .{ "color_targets[8]", "color_targets[10]", "bjorge", "frag_dual_bjorge" },
+                    .{ "color_targets[10]", "color_targets[12]", "bjorge", "frag_dual_bjorge" },
                 },
             },
         },
@@ -472,10 +472,10 @@
                 .template = "fragment_dual_filter_upsample",
                 .args = .{
                     // TEXTURE_IN, TEXTURE_OUT, FILTER, FILTER_PARAM, CONDITION
-                    .{ "color_targets[12]", "color_targets[10]", "kawase", null, "frag_dual_kawase" },
-                    .{ "color_targets[10]", "color_targets[8]", "kawase", null, "frag_dual_kawase" },
-                    .{ "color_targets[8]", "color_targets[6]", "kawase", null, "frag_dual_kawase" },
-                    .{ "color_targets[6]", "color_targets[5]", "kawase", null, "frag_dual_kawase" },
+                    .{ "color_targets[12]", "color_targets[10]", "bjorge", null, "frag_dual_bjorge" },
+                    .{ "color_targets[10]", "color_targets[8]", "bjorge", null, "frag_dual_bjorge" },
+                    .{ "color_targets[8]", "color_targets[6]", "bjorge", null, "frag_dual_bjorge" },
+                    .{ "color_targets[6]", "color_targets[5]", "bjorge", null, "frag_dual_bjorge" },
                 },
             },
         },
@@ -485,11 +485,11 @@
                 .template = "fragment_dual_filter_downsample",
                 .args = .{
                     // TEXTURE_IN, TEXTURE_OUT, FILTER, CONDITION
-                    .{ "color_targets[2]", "color_targets[5]", "jimenez", "frag_jimenez" },
-                    .{ "color_targets[5]", "color_targets[6]", "jimenez", "frag_jimenez" },
-                    .{ "color_targets[6]", "color_targets[8]", "jimenez", "frag_jimenez" },
-                    .{ "color_targets[8]", "color_targets[10]", "jimenez", "frag_jimenez" },
-                    .{ "color_targets[10]", "color_targets[12]", "jimenez", "frag_jimenez" },
+                    .{ "color_targets[2]", "color_targets[5]", "jimenez", "frag_dual_jimenez" },
+                    .{ "color_targets[5]", "color_targets[6]", "jimenez", "frag_dual_jimenez" },
+                    .{ "color_targets[6]", "color_targets[8]", "jimenez", "frag_dual_jimenez" },
+                    .{ "color_targets[8]", "color_targets[10]", "jimenez", "frag_dual_jimenez" },
+                    .{ "color_targets[10]", "color_targets[12]", "jimenez", "frag_dual_jimenez" },
                 },
             },
         },
@@ -498,10 +498,10 @@
                 .template = "fragment_dual_filter_upsample",
                 .args = .{
                     // TEXTURE_IN, TEXTURE_OUT, FILTER, FILTER_PARAM, CONDITION
-                    .{ "color_targets[12]", "color_targets[10]", "jimenez", "pixel_scale=2", "frag_jimenez" },
-                    .{ "color_targets[10]", "color_targets[8]", "jimenez", "pixel_scale=2", "frag_jimenez" },
-                    .{ "color_targets[8]", "color_targets[6]", "jimenez", "pixel_scale=2", "frag_jimenez" },
-                    .{ "color_targets[6]", "color_targets[5]", "jimenez", "pixel_scale=2", "frag_jimenez" },
+                    .{ "color_targets[12]", "color_targets[10]", "jimenez", "pixel_scale=2", "frag_dual_jimenez" },
+                    .{ "color_targets[10]", "color_targets[8]", "jimenez", "pixel_scale=2", "frag_dual_jimenez" },
+                    .{ "color_targets[8]", "color_targets[6]", "jimenez", "pixel_scale=2", "frag_dual_jimenez" },
+                    .{ "color_targets[6]", "color_targets[5]", "jimenez", "pixel_scale=2", "frag_dual_jimenez" },
                 },
             },
         },
