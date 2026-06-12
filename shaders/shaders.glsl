@@ -91,7 +91,7 @@ layout(location = 0) out vec4 out_color;
 
 void main() {
     if (bitCount(int(gl_FragCoord.x)) == 1 && bitCount(int(gl_FragCoord.y)) == 1) {
-        out_color = vec4(10000.0);
+        out_color = vec4(POINT_VALUE);
     } else {
         out_color = vec4(vec3(0.0), 1.0);
     }

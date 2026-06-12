@@ -241,6 +241,9 @@ void main() {
 #if defined(BJORGE)
 void main() {
     vec2 o = 0.5 / textureSize(u_input_texture, 0);
+    #if defined(PIXEL_SCALE)
+    o *= PIXEL_SCALE;
+    #endif
 
     vec4 sum = vec4(0.0);
 

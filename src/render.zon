@@ -14,6 +14,8 @@
         .{ .format = .r16g16b16a16_float, .q = 16 }, // 11
         .{ .format = .r16g16b16a16_float, .q = 32 }, // 12
         .{ .format = .r16g16b16a16_float, .q = 32 }, // 13
+        .{ .format = .r16g16b16a16_float, .q = 64 }, // 14
+        .{ .format = .r16g16b16a16_float, .q = 64 }, // 15
     },
     .depth_targets = .{
         .{ .format = .d16_unorm, .sample_count = .@"4" },
@@ -237,6 +239,7 @@
                 .{ .name = "TEXTURE_IN" },
                 .{ .name = "TEXTURE_OUT" },
                 .{ .name = "FILTER" },
+                .{ .name = "FILTER_PARAM" },
                 .{ .name = "CONDITION" },
             },
             .passes = .{
@@ -245,7 +248,7 @@
                     .drawcalls = .{.{
                         .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
                             .file = "bloom.glsl",
-                            .params = .{ "FILTER", "down" },
+                            .params = .{ "FILTER", "down", "FILTER_PARAM" },
                         } } } }},
                         .fragment_samplers = .{
                             .{ .texture = "TEXTURE_IN", .sampler = "linear" },
@@ -290,55 +293,56 @@
         },
     },
     .passes = .{
-        // .{ // Main render pass
-        //     .render = .{
-        //         .drawcalls = .{
-        //             .{
-        //                 .pipelines = .{.{
-        //                     .shader = .{ .all = .{
-        //                         .file = "shaders.glsl",
-        //                         .params = .{"main"},
-        //                     } },
-        //                     .depth_stencil_state = .{ .depth = .{} },
-        //                 }},
-        //                 .vertex_buffer = "cube",
-        //                 .instance_buffer = "cube_instances",
-        //             },
-        //         },
-        //         .color_targets = .{.{
-        //             .texture = "color_targets[0]",
-        //             .resolve_texture = "color_targets[1]",
-        //             .store_op = .resolve,
-        //         }},
-        //         .depth_target = .{ .texture = "depth_targets[0]", .store_op = .dont_care },
-        //     },
-        // },
-        .{
+        .{ // Main render pass
             .render = .{
-                .drawcalls = .{.{
-                    .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
-                        .file = "shaders.glsl",
-                        .params = .{"point_image"},
-                    } } } }},
+                .drawcalls = .{
+                    .{
+                        .pipelines = .{.{
+                            .shader = .{ .all = .{
+                                .file = "shaders.glsl",
+                                .params = .{"main"},
+                            } },
+                            .depth_stencil_state = .{ .depth = .{} },
+                        }},
+                        .vertex_buffer = "cube",
+                        .instance_buffer = "cube_instances",
+                    },
+                },
+                .color_targets = .{.{
+                    .texture = "color_targets[0]",
+                    .resolve_texture = "color_targets[1]",
+                    .store_op = .resolve,
                 }},
-                .color_targets = .{.{ .texture = "color_targets[2]" }},
+                .depth_target = .{ .texture = "depth_targets[0]", .store_op = .dont_care },
             },
         },
 
-        // .{ // Bloom prefilter
+        // .{ // Impulse image
         //     .render = .{
         //         .drawcalls = .{.{
         //             .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
-        //                 .file = "bloom.glsl",
-        //                 .params = .{ "prefilter" },
+        //                 .file = "shaders.glsl",
+        //                 .params = .{"point_image", "point_value=10"},
         //             } } } }},
-        //             .fragment_samplers = .{
-        //                 .{ .texture = "color_targets[1]", .sampler = "nearest" },
-        //             },
         //         }},
         //         .color_targets = .{.{ .texture = "color_targets[2]" }},
         //     },
         // },
+
+        .{ // Bloom prefilter
+            .render = .{
+                .drawcalls = .{.{
+                    .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                        .file = "bloom.glsl",
+                        .params = .{"prefilter"},
+                    } } } }},
+                    .fragment_samplers = .{
+                        .{ .texture = "color_targets[1]", .sampler = "nearest" },
+                    },
+                }},
+                .color_targets = .{.{ .texture = "color_targets[2]" }},
+            },
+        },
 
         .{ // Compute naive convolution filter chain
             .unroll = .{
@@ -470,11 +474,12 @@
                 .template = "fragment_dual_filter_downsample",
                 .args = .{
                     // TEXTURE_IN, TEXTURE_OUT, FILTER, CONDITION
-                    .{ "color_targets[2]", "color_targets[5]", "bjorge", "frag_dual_bjorge" },
-                    .{ "color_targets[5]", "color_targets[6]", "bjorge", "frag_dual_bjorge" },
-                    .{ "color_targets[6]", "color_targets[8]", "bjorge", "frag_dual_bjorge" },
-                    .{ "color_targets[8]", "color_targets[10]", "bjorge", "frag_dual_bjorge" },
-                    .{ "color_targets[10]", "color_targets[12]", "bjorge", "frag_dual_bjorge" },
+                    .{ "color_targets[2]", "color_targets[5]", "bjorge", "pixel_scale=1.4", "frag_dual_bjorge" },
+                    .{ "color_targets[5]", "color_targets[6]", "bjorge", "pixel_scale=1.4", "frag_dual_bjorge" },
+                    .{ "color_targets[6]", "color_targets[8]", "bjorge", "pixel_scale=1.4", "frag_dual_bjorge" },
+                    .{ "color_targets[8]", "color_targets[10]", "bjorge", "pixel_scale=1.4", "frag_dual_bjorge" },
+                    .{ "color_targets[10]", "color_targets[12]", "bjorge", "pixel_scale=1.4", "frag_dual_bjorge" },
+                    .{ "color_targets[12]", "color_targets[14]", "bjorge", "pixel_scale=1.4", "frag_dual_bjorge" },
                 },
             },
         },
@@ -483,10 +488,11 @@
                 .template = "fragment_dual_filter_upsample",
                 .args = .{
                     // TEXTURE_IN, TEXTURE_OUT, FILTER, FILTER_PARAM, CONDITION
-                    .{ "color_targets[12]", "color_targets[10]", "bjorge", null, "frag_dual_bjorge" },
-                    .{ "color_targets[10]", "color_targets[8]", "bjorge", null, "frag_dual_bjorge" },
-                    .{ "color_targets[8]", "color_targets[6]", "bjorge", null, "frag_dual_bjorge" },
-                    .{ "color_targets[6]", "color_targets[5]", "bjorge", null, "frag_dual_bjorge" },
+                    .{ "color_targets[14]", "color_targets[12]", "bjorge", "pixel_scale=1.4", "frag_dual_bjorge" },
+                    .{ "color_targets[12]", "color_targets[10]", "bjorge", "pixel_scale=1.4", "frag_dual_bjorge" },
+                    .{ "color_targets[10]", "color_targets[8]", "bjorge", "pixel_scale=1.4", "frag_dual_bjorge" },
+                    .{ "color_targets[8]", "color_targets[6]", "bjorge", "pixel_scale=1.4", "frag_dual_bjorge" },
+                    .{ "color_targets[6]", "color_targets[5]", "bjorge", "pixel_scale=1.4", "frag_dual_bjorge" },
                 },
             },
         },
@@ -496,11 +502,11 @@
                 .template = "fragment_dual_filter_downsample",
                 .args = .{
                     // TEXTURE_IN, TEXTURE_OUT, FILTER, CONDITION
-                    .{ "color_targets[2]", "color_targets[5]", "jimenez", "frag_dual_jimenez" },
-                    .{ "color_targets[5]", "color_targets[6]", "jimenez", "frag_dual_jimenez" },
-                    .{ "color_targets[6]", "color_targets[8]", "jimenez", "frag_dual_jimenez" },
-                    .{ "color_targets[8]", "color_targets[10]", "jimenez", "frag_dual_jimenez" },
-                    .{ "color_targets[10]", "color_targets[12]", "jimenez", "frag_dual_jimenez" },
+                    .{ "color_targets[2]", "color_targets[5]", "jimenez", null, "frag_dual_jimenez" },
+                    .{ "color_targets[5]", "color_targets[6]", "jimenez", null, "frag_dual_jimenez" },
+                    .{ "color_targets[6]", "color_targets[8]", "jimenez", null, "frag_dual_jimenez" },
+                    .{ "color_targets[8]", "color_targets[10]", "jimenez", null, "frag_dual_jimenez" },
+                    .{ "color_targets[10]", "color_targets[12]", "jimenez", null, "frag_dual_jimenez" },
                 },
             },
         },
