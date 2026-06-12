@@ -290,44 +290,55 @@
         },
     },
     .passes = .{
-        .{ // Main render pass
-            .render = .{
-                .drawcalls = .{
-                    .{
-                        .pipelines = .{.{
-                            .shader = .{ .all = .{
-                                .file = "shaders.glsl",
-                                .params = .{"main"},
-                            } },
-                            .depth_stencil_state = .{ .depth = .{} },
-                        }},
-                        .vertex_buffer = "cube",
-                        .instance_buffer = "cube_instances",
-                    },
-                },
-                .color_targets = .{.{
-                    .texture = "color_targets[0]",
-                    .resolve_texture = "color_targets[1]",
-                    .store_op = .resolve,
-                }},
-                .depth_target = .{ .texture = "depth_targets[0]", .store_op = .dont_care },
-            },
-        },
-
-        .{ // Bloom prefilter
+        // .{ // Main render pass
+        //     .render = .{
+        //         .drawcalls = .{
+        //             .{
+        //                 .pipelines = .{.{
+        //                     .shader = .{ .all = .{
+        //                         .file = "shaders.glsl",
+        //                         .params = .{"main"},
+        //                     } },
+        //                     .depth_stencil_state = .{ .depth = .{} },
+        //                 }},
+        //                 .vertex_buffer = "cube",
+        //                 .instance_buffer = "cube_instances",
+        //             },
+        //         },
+        //         .color_targets = .{.{
+        //             .texture = "color_targets[0]",
+        //             .resolve_texture = "color_targets[1]",
+        //             .store_op = .resolve,
+        //         }},
+        //         .depth_target = .{ .texture = "depth_targets[0]", .store_op = .dont_care },
+        //     },
+        // },
+        .{
             .render = .{
                 .drawcalls = .{.{
                     .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
-                        .file = "bloom.glsl",
-                        .params = .{"prefilter"},
+                        .file = "shaders.glsl",
+                        .params = .{"point_image"},
                     } } } }},
-                    .fragment_samplers = .{
-                        .{ .texture = "color_targets[1]", .sampler = "nearest" },
-                    },
                 }},
                 .color_targets = .{.{ .texture = "color_targets[2]" }},
             },
         },
+
+        // .{ // Bloom prefilter
+        //     .render = .{
+        //         .drawcalls = .{.{
+        //             .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+        //                 .file = "bloom.glsl",
+        //                 .params = .{ "prefilter" },
+        //             } } } }},
+        //             .fragment_samplers = .{
+        //                 .{ .texture = "color_targets[1]", .sampler = "nearest" },
+        //             },
+        //         }},
+        //         .color_targets = .{.{ .texture = "color_targets[2]" }},
+        //     },
+        // },
 
         .{ // Compute naive convolution filter chain
             .unroll = .{

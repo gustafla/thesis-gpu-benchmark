@@ -83,17 +83,17 @@ void main() {
 #endif // FRAGMENT and POST
 
 #if defined(FRAGMENT) && defined(POINT_IMAGE)
-layout(location = 0) in vec2 in_uv;
+in vec4 gl_FragCoord;
 
 layout(location = 0) out vec4 out_color;
 
 #include <color.glsl>
 
 void main() {
-    if (gl_FragCoord.x == 0 && gl_FragCoord.y == 0) {
-        out_color = vec4(1.0);
+    if (bitCount(int(gl_FragCoord.x)) == 1 && bitCount(int(gl_FragCoord.y)) == 1) {
+        out_color = vec4(1024.0);
     } else {
         out_color = vec4(vec3(0.0), 1.0);
     }
 }
-#endif // FRAGMENT and POST
+#endif // FRAGMENT and POINT_IMAGE
