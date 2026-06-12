@@ -9,6 +9,6 @@
     .far = 1024,
     .noise_size = 64,
 
-    .blur_radius = 5,
-    .blur_sigma = 2,
+    .blur_radius = 11,
+    .blur_sigma = 1.8,
 }
