@@ -322,7 +322,7 @@
         //         .drawcalls = .{.{
         //             .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
         //                 .file = "shaders.glsl",
-        //                 .params = .{"point_image", "point_value=10"},
+        //                 .params = .{ "point_image", "point_value=10000" },
         //             } } } }},
         //         }},
         //         .color_targets = .{.{ .texture = "color_targets[2]" }},
@@ -442,32 +442,33 @@
             },
         },
 
-        // Convolution chain compositing
-        .{ .render = .{
-            .require_any_tags = .{
-                "comp_naive",
-                "comp_2pass_separable",
-                "comp_2pass_separable_cache",
-                "comp_1pass_separable_cache",
-                "frag_naive",
-                "frag_2pass_separable",
-                "frag_3pass_separable",
-            },
-            .drawcalls = .{.{
-                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
-                    .file = "bloom.glsl",
-                    .params = .{"composite"},
-                } } } }},
-                .fragment_samplers = .{
-                    .{ .texture = "color_targets[4]", .sampler = "linear" },
-                    .{ .texture = "color_targets[6]", .sampler = "linear" },
-                    .{ .texture = "color_targets[8]", .sampler = "linear" },
-                    .{ .texture = "color_targets[10]", .sampler = "linear" },
-                    .{ .texture = "color_targets[12]", .sampler = "linear" },
+        .{ // Convolution chain compositing
+            .render = .{
+                .require_any_tags = .{
+                    "comp_naive",
+                    "comp_2pass_separable",
+                    "comp_2pass_separable_cache",
+                    "comp_1pass_separable_cache",
+                    "frag_naive",
+                    "frag_2pass_separable",
+                    "frag_3pass_separable",
                 },
-            }},
-            .color_targets = .{.{ .texture = "color_targets[5]" }},
-        } },
+                .drawcalls = .{.{
+                    .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                        .file = "bloom.glsl",
+                        .params = .{"composite"},
+                    } } } }},
+                    .fragment_samplers = .{
+                        .{ .texture = "color_targets[4]", .sampler = "linear" },
+                        .{ .texture = "color_targets[6]", .sampler = "linear" },
+                        .{ .texture = "color_targets[8]", .sampler = "linear" },
+                        .{ .texture = "color_targets[10]", .sampler = "linear" },
+                        .{ .texture = "color_targets[12]", .sampler = "linear" },
+                    },
+                }},
+                .color_targets = .{.{ .texture = "color_targets[5]" }},
+            },
+        },
 
         .{ // Fragment dual kawase filter chain
             .unroll = .{
@@ -523,34 +524,35 @@
             },
         },
 
-        // Post processing and output
-        .{ .render = .{
-            .drawcalls = .{
-                .{
-                    .pipelines = .{.{
-                        .shader = .{ .stages = .{ .frag = .{
-                            .file = "shaders.glsl",
-                            .params = .{"post"},
-                        } } },
-                    }},
-                    .fragment_samplers = .{
-                        .{ .texture = "color_targets[1]", .sampler = "nearest" },
-                        .{ .texture = "color_targets[5]", .sampler = "linear" },
+        .{ // Post processing and output
+            .render = .{
+                .drawcalls = .{
+                    .{
+                        .pipelines = .{.{
+                            .shader = .{ .stages = .{ .frag = .{
+                                .file = "shaders.glsl",
+                                .params = .{"post"},
+                            } } },
+                        }},
+                        .fragment_samplers = .{
+                            .{ .texture = "color_targets[1]", .sampler = "nearest" },
+                            .{ .texture = "color_targets[5]", .sampler = "linear" },
+                        },
+                    },
+                    .{
+                        .pipelines = .{.{
+                            .shader = .{ .all = .{ .file = "text.glsl" } },
+                            .primitive_type = .trianglestrip,
+                            .blend_states = .{.{
+                                .enable = true,
+                            }},
+                        }},
+                        .fragment_samplers = .{.{ .texture = "font_atlas", .sampler = "linear" }},
+                        .instance_buffer = "text_instances",
+                        .num_vertices = 4,
                     },
                 },
-                .{
-                    .pipelines = .{.{
-                        .shader = .{ .all = .{ .file = "text.glsl" } },
-                        .primitive_type = .trianglestrip,
-                        .blend_states = .{.{
-                            .enable = true,
-                        }},
-                    }},
-                    .fragment_samplers = .{.{ .texture = "font_atlas", .sampler = "linear" }},
-                    .instance_buffer = "text_instances",
-                    .num_vertices = 4,
-                },
             },
-        } },
+        },
     },
 }
