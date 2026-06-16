@@ -473,11 +473,11 @@
                 .template = "fragment_dual_filter_downsample",
                 .args = .{
                     // TEXTURE_IN, TEXTURE_OUT, FILTER, CONDITION
-                    .{ "color_targets[2]", "color_targets[5]", "bjorge", "pixel_scale=1.276", "frag_dual_bjorge" },
-                    .{ "color_targets[5]", "color_targets[6]", "bjorge", "pixel_scale=1.276", "frag_dual_bjorge" },
-                    .{ "color_targets[6]", "color_targets[8]", "bjorge", "pixel_scale=1.276", "frag_dual_bjorge" },
-                    .{ "color_targets[8]", "color_targets[10]", "bjorge", "pixel_scale=1.276", "frag_dual_bjorge" },
-                    .{ "color_targets[10]", "color_targets[12]", "bjorge", "pixel_scale=1.276", "frag_dual_bjorge" },
+                    .{ "color_targets[2]", "color_targets[5]", "bjorge", null, "frag_dual_bjorge" },
+                    .{ "color_targets[5]", "color_targets[6]", "bjorge", null, "frag_dual_bjorge" },
+                    .{ "color_targets[6]", "color_targets[8]", "bjorge", null, "frag_dual_bjorge" },
+                    .{ "color_targets[8]", "color_targets[10]", "bjorge", null, "frag_dual_bjorge" },
+                    .{ "color_targets[10]", "color_targets[12]", "bjorge", null, "frag_dual_bjorge" },
                 },
             },
         },
@@ -486,10 +486,10 @@
                 .template = "fragment_dual_filter_upsample",
                 .args = .{
                     // TEXTURE_IN, TEXTURE_OUT, FILTER, FILTER_PARAM, CONDITION
-                    .{ "color_targets[12]", "color_targets[10]", "bjorge", "pixel_scale=1.276", "frag_dual_bjorge" },
-                    .{ "color_targets[10]", "color_targets[8]", "bjorge", "pixel_scale=1.276", "frag_dual_bjorge" },
-                    .{ "color_targets[8]", "color_targets[6]", "bjorge", "pixel_scale=1.276", "frag_dual_bjorge" },
-                    .{ "color_targets[6]", "color_targets[5]", "bjorge", "pixel_scale=1.276", "frag_dual_bjorge" },
+                    .{ "color_targets[12]", "color_targets[10]", "bjorge", null, "frag_dual_bjorge" },
+                    .{ "color_targets[10]", "color_targets[8]", "bjorge", null, "frag_dual_bjorge" },
+                    .{ "color_targets[8]", "color_targets[6]", "bjorge", null, "frag_dual_bjorge" },
+                    .{ "color_targets[6]", "color_targets[5]", "bjorge", null, "frag_dual_bjorge" },
                 },
             },
         },
@@ -512,10 +512,10 @@
                 .template = "fragment_dual_filter_upsample",
                 .args = .{
                     // TEXTURE_IN, TEXTURE_OUT, FILTER, FILTER_PARAM, CONDITION
-                    .{ "color_targets[12]", "color_targets[10]", "jimenez", "pixel_scale=2", "frag_dual_jimenez" },
-                    .{ "color_targets[10]", "color_targets[8]", "jimenez", "pixel_scale=2", "frag_dual_jimenez" },
-                    .{ "color_targets[8]", "color_targets[6]", "jimenez", "pixel_scale=2", "frag_dual_jimenez" },
-                    .{ "color_targets[6]", "color_targets[5]", "jimenez", "pixel_scale=2", "frag_dual_jimenez" },
+                    .{ "color_targets[12]", "color_targets[10]", "jimenez", "pixel_scale=1.472", "frag_dual_jimenez" },
+                    .{ "color_targets[10]", "color_targets[8]", "jimenez", "pixel_scale=1.472", "frag_dual_jimenez" },
+                    .{ "color_targets[8]", "color_targets[6]", "jimenez", "pixel_scale=1.472", "frag_dual_jimenez" },
+                    .{ "color_targets[6]", "color_targets[5]", "jimenez", "pixel_scale=1.472", "frag_dual_jimenez" },
                 },
             },
         },
