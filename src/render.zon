@@ -3,7 +3,7 @@
         .{ .format = .r16g16b16a16_float, .sample_count = .@"4" }, // 0
         .{ .format = .r16g16b16a16_float }, // 1
         .{ .format = .r16g16b16a16_float }, // 2
-        .{ .format = .r16g16b16a16_float }, // 3
+        .{ .format = .r16g16b16a16_float, .q = 2 }, // 3
         .{ .format = .r16g16b16a16_float, .q = 2 }, // 4
         .{ .format = .r16g16b16a16_float, .q = 2 }, // 5
         .{ .format = .r16g16b16a16_float, .q = 4 }, // 6
@@ -181,6 +181,52 @@
             },
         },
 
+        .{ // Fragment separable convolution for the dense reference filter
+            .name = "fragment_filter_2pass_dense_additive",
+            .params = .{
+                .{ .name = "TEXTURE_IN" },
+                .{ .name = "TEXTURE_MID" },
+                .{ .name = "TEXTURE_OUT" },
+                .{ .name = "FILTER_PARAM1" },
+                .{ .name = "FILTER_PARAM2" },
+            },
+            .passes = .{
+                .{ .render = .{
+                    .require_all_tags = .{"frag_dense"},
+                    .drawcalls = .{.{
+                        .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                            .file = "bloom.glsl",
+                            .params = .{ "horizontal", "FILTER_PARAM1", "FILTER_PARAM2" },
+                        } } } }},
+                        .fragment_samplers = .{
+                            .{ .texture = "TEXTURE_IN", .sampler = "linear" },
+                        },
+                    }},
+                    .color_targets = .{.{ .texture = "TEXTURE_MID" }},
+                } },
+                .{ .render = .{
+                    .require_all_tags = .{"frag_dense"},
+                    .drawcalls = .{.{
+                        .pipelines = .{.{
+                            .shader = .{ .stages = .{ .frag = .{
+                                .file = "bloom.glsl",
+                                .params = .{ "vertical", "FILTER_PARAM1", "FILTER_PARAM2" },
+                            } } },
+                            .blend_states = .{.{
+                                .enable = true,
+                                .src_color = .one,
+                                .dst_color = .one,
+                            }},
+                        }},
+                        .fragment_samplers = .{
+                            .{ .texture = "TEXTURE_MID", .sampler = "linear" },
+                        },
+                    }},
+                    .color_targets = .{.{ .texture = "TEXTURE_OUT", .load_op = .load }},
+                } },
+            },
+        },
+
         .{ // Fragment separable with downsampling
             .name = "fragment_filter_3pass",
             .params = .{
@@ -320,7 +366,7 @@
         //         .drawcalls = .{.{
         //             .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
         //                 .file = "shaders.glsl",
-        //                 .params = .{ "point_image", "point_value=10000" },
+        //                 .params = .{ "point_image", "point_value=1000" },
         //             } } } }},
         //         }},
         //         .color_targets = .{.{ .texture = "color_targets[2]" }},
@@ -516,6 +562,44 @@
                     .{ "color_targets[10]", "color_targets[8]", "jimenez", "pixel_scale=1.472", "frag_dual_jimenez" },
                     .{ "color_targets[8]", "color_targets[6]", "jimenez", "pixel_scale=1.472", "frag_dual_jimenez" },
                     .{ "color_targets[6]", "color_targets[5]", "jimenez", "pixel_scale=1.472", "frag_dual_jimenez" },
+                },
+            },
+        },
+
+        // Fragment dense reference convolution
+        .{ .render = .{
+            .require_all_tags = .{"frag_dense"},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "shaders.glsl",
+                    .params = .{"clear"},
+                } } } }},
+            }},
+            .color_targets = .{.{ .texture = "color_targets[5]" }},
+        } },
+        .{ .render = .{
+            .require_all_tags = .{"frag_dense"},
+            .drawcalls = .{.{
+                .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                    .file = "bloom.glsl",
+                    .params = .{"sample"},
+                } } } }},
+                .fragment_samplers = .{
+                    .{ .texture = "color_targets[2]", .sampler = "linear" },
+                },
+            }},
+            .color_targets = .{.{ .texture = "color_targets[3]" }},
+        } },
+        .{
+            .unroll = .{
+                .template = "fragment_filter_2pass_dense_additive",
+                .args = .{
+                    // TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT, FILTER_PARAM1, FILTER_PARAM2
+                    .{ "color_targets[3]", "color_targets[4]", "color_targets[5]", "blur_sigma=1.21", "blur_radius=4" },
+                    .{ "color_targets[3]", "color_targets[4]", "color_targets[5]", "blur_sigma=2.70", "blur_radius=9" },
+                    .{ "color_targets[3]", "color_targets[4]", "color_targets[5]", "blur_sigma=5.53", "blur_radius=17" },
+                    .{ "color_targets[3]", "color_targets[4]", "color_targets[5]", "blur_sigma=11.13", "blur_radius=34" },
+                    .{ "color_targets[3]", "color_targets[4]", "color_targets[5]", "blur_sigma=22.30", "blur_radius=67" },
                 },
             },
         },
