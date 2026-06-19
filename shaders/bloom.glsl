@@ -238,50 +238,67 @@ void main() {
 }
 #endif // HORIZONTAL or VERTICAL
 
-#if defined(BJORGE)
+#if defined(BJORGE) || defined(JIMENEZ)
 void main() {
-    vec2 o = 1.0 / textureSize(u_input_texture, 0);
-    #if defined(PIXEL_SCALE)
-    o *= PIXEL_SCALE;
-    #endif
+    // UPSAMPLING: Output pixel covers a quadrant of an input pixel.
+    // Fragment UV coordinates land on the pixel quadrant center.
+    // 1.0 / textureSize(input) is half an output pixel size.
+    // +--+--+--+--+
+    // |XX|  |..|..|
+    // +--+--+--+--+
+    // |  |  |..|..|
+    // +--+--+--+--+
+    // |..|..|  |  |
+    // +--+--+--+--+
+    // |..|..|  |  |
+    // +--+--+--+--+
+    //
+    // DOWNSAMPLING: Output pixel covers four input pixels.
+    // Fragment UV coordinates land on the middle seam.
+    // 1.0 / textureSize(input) is twice an output pixel size.
+    // +--+--+--+--+
+    // |XXXXX|  |..|
+    // +XXXXX+--+--+
+    // |XXXXX|..|  |
+    // +--+--+--+--+
+    // |  |..|  |..|
+    // +--+--+--+--+
+    // |..|  |..|  |
+    // +--+--+--+--+
 
-    vec4 sum = vec4(0.0);
-
-    #if defined(UP)
-    const float weight = 1.0 / 12.0;
-    sum += texture(u_input_texture, in_uv + vec2(-2.0, 0.0) * o);
-    sum += texture(u_input_texture, in_uv + vec2(2.0, 0.0) * o);
-    sum += texture(u_input_texture, in_uv + vec2(0.0, -2.0) * o);
-    sum += texture(u_input_texture, in_uv + vec2(0.0, 2.0) * o);
-    sum += texture(u_input_texture, in_uv + vec2(-1.0, 1.0) * o) * 2.0;
-    sum += texture(u_input_texture, in_uv + vec2(1.0, 1.0) * o) * 2.0;
-    sum += texture(u_input_texture, in_uv + vec2(-1.0, -1.0) * o) * 2.0;
-    sum += texture(u_input_texture, in_uv + vec2(1.0, -1.0) * o) * 2.0;
-    #elif defined(DOWN)
-    const float weight = 1.0 / 8.0;
-    sum += texture(u_input_texture, in_uv) * 4.0;
-    sum += texture(u_input_texture, in_uv + vec2(-1.0, -1.0) * o);
-    sum += texture(u_input_texture, in_uv + vec2(1.0, -1.0) * o);
-    sum += texture(u_input_texture, in_uv + vec2(-1.0, 1.0) * o);
-    sum += texture(u_input_texture, in_uv + vec2(1.0, 1.0) * o);
-    #else
-    #error "Either UP or DOWN must be defined"
-    #endif // UP elif DOWN
-
-    out_color = sum * weight;
-}
-#endif // BJORGE
-
-#if defined(JIMENEZ)
-void main() {
     vec2 t = 1.0 / textureSize(u_input_texture, 0);
     #if defined(PIXEL_SCALE)
     t *= PIXEL_SCALE;
     #endif
 
+    // UNCOMMENT: if you want the upsample stencil to use 1:1 pixel coordinates.
+    // This is not necessary (Nyquist-Shannon) and results in sample overlap.
+    //
+    // #if defined(UP)
+    // t *= 0.5;
+    // #endif
+
     vec4 sum = vec4(0.0);
 
-    #if defined(UP)
+    #if defined(BJORGE) && defined(UP)
+    const float weight = 1.0 / 12.0;
+    sum += texture(u_input_texture, in_uv + vec2(-2.0, 0.0) * t);
+    sum += texture(u_input_texture, in_uv + vec2(2.0, 0.0) * t);
+    sum += texture(u_input_texture, in_uv + vec2(0.0, -2.0) * t);
+    sum += texture(u_input_texture, in_uv + vec2(0.0, 2.0) * t);
+    sum += texture(u_input_texture, in_uv + vec2(-1.0, 1.0) * t) * 2.0;
+    sum += texture(u_input_texture, in_uv + vec2(1.0, 1.0) * t) * 2.0;
+    sum += texture(u_input_texture, in_uv + vec2(-1.0, -1.0) * t) * 2.0;
+    sum += texture(u_input_texture, in_uv + vec2(1.0, -1.0) * t) * 2.0;
+    #elif defined(BJORGE) &&  defined(DOWN)
+    const float weight = 1.0 / 8.0;
+    sum += texture(u_input_texture, in_uv) * 4.0;
+    sum += texture(u_input_texture, in_uv + vec2(-1.0, -1.0) * t);
+    sum += texture(u_input_texture, in_uv + vec2(1.0, -1.0) * t);
+    sum += texture(u_input_texture, in_uv + vec2(-1.0, 1.0) * t);
+    sum += texture(u_input_texture, in_uv + vec2(1.0, 1.0) * t);
+
+    #elif defined(JIMENEZ) && defined(UP)
     const float weight = 1.0 / 16.0;
     sum += texture(u_input_texture, in_uv + vec2(-1.0, 1.0) * t);
     sum += texture(u_input_texture, in_uv + vec2(0.0, 1.0) * t) * 2.0;
@@ -292,7 +309,7 @@ void main() {
     sum += texture(u_input_texture, in_uv + vec2(-1.0, -1.0) * t);
     sum += texture(u_input_texture, in_uv + vec2(0.0, -1.0) * t) * 2.0;
     sum += texture(u_input_texture, in_uv + vec2(1.0, -1.0) * t);
-    #elif defined(DOWN)
+    #elif defined(JIMENEZ) && defined(DOWN)
     const float weight = 1.0 / 32.0;
     sum += texture(u_input_texture, in_uv + vec2(-2.0, 2.0) * t);
     sum += texture(u_input_texture, in_uv + vec2(0.0, 2.0) * t) * 2.0;
@@ -313,5 +330,5 @@ void main() {
 
     out_color = sum * weight;
 }
-#endif // JIMENEZ
+#endif // BJORGE or JIMENEZ
 #endif // FRAGMENT
