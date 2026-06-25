@@ -37,6 +37,7 @@
                 .{ .name = "TEXTURE_MID" },
                 .{ .name = "TEXTURE_OUT" },
                 .{ .name = "FILTER" },
+                .{ .name = "FILTER_PARAM" },
                 .{ .name = "CONDITION" },
             },
             .passes = .{
@@ -58,7 +59,7 @@
                     .dispatches = .{.{
                         .comp = .{
                             .file = "bloom.glsl",
-                            .params = .{"FILTER"},
+                            .params = .{ "FILTER", "FILTER_PARAM" },
                         },
                         .threads = .{ .x = 8, .y = 8 },
                         .groups = .{ .p = .{ .texture_size = "TEXTURE_OUT" }, .q = .threads },
@@ -392,12 +393,12 @@
             .unroll = .{
                 .template = "compute_filter_1pass",
                 .args = .{
-                    // TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT, FILTER, CONDITION
-                    .{ "color_targets[2]", "color_targets[5]", "color_targets[4]", "naive", "comp_naive" },
-                    .{ "color_targets[4]", "color_targets[7]", "color_targets[6]", "naive", "comp_naive" },
-                    .{ "color_targets[6]", "color_targets[9]", "color_targets[8]", "naive", "comp_naive" },
-                    .{ "color_targets[8]", "color_targets[11]", "color_targets[10]", "naive", "comp_naive" },
-                    .{ "color_targets[10]", "color_targets[13]", "color_targets[12]", "naive", "comp_naive" },
+                    // TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT, FILTER, FILTER_PARAM, CONDITION
+                    .{ "color_targets[2]", "color_targets[5]", "color_targets[4]", "naive", null, "comp_naive" },
+                    .{ "color_targets[4]", "color_targets[7]", "color_targets[6]", "naive", null, "comp_naive" },
+                    .{ "color_targets[6]", "color_targets[9]", "color_targets[8]", "naive", null, "comp_naive" },
+                    .{ "color_targets[8]", "color_targets[11]", "color_targets[10]", "naive", null, "comp_naive" },
+                    .{ "color_targets[10]", "color_targets[13]", "color_targets[12]", "naive", null, "comp_naive" },
                 },
             },
         },
@@ -434,12 +435,26 @@
             .unroll = .{
                 .template = "compute_filter_1pass",
                 .args = .{
-                    // TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT, FILTER, CONDITION
-                    .{ "color_targets[2]", "color_targets[5]", "color_targets[4]", "cache", "comp_1pass_separable_cache" },
-                    .{ "color_targets[4]", "color_targets[7]", "color_targets[6]", "cache", "comp_1pass_separable_cache" },
-                    .{ "color_targets[6]", "color_targets[9]", "color_targets[8]", "cache", "comp_1pass_separable_cache" },
-                    .{ "color_targets[8]", "color_targets[11]", "color_targets[10]", "cache", "comp_1pass_separable_cache" },
-                    .{ "color_targets[10]", "color_targets[13]", "color_targets[12]", "cache", "comp_1pass_separable_cache" },
+                    // TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT, FILTER, FILTER_PARAM, CONDITION
+                    .{ "color_targets[2]", "color_targets[5]", "color_targets[4]", "cache", null, "comp_1pass_separable_cache" },
+                    .{ "color_targets[4]", "color_targets[7]", "color_targets[6]", "cache", null, "comp_1pass_separable_cache" },
+                    .{ "color_targets[6]", "color_targets[9]", "color_targets[8]", "cache", null, "comp_1pass_separable_cache" },
+                    .{ "color_targets[8]", "color_targets[11]", "color_targets[10]", "cache", null, "comp_1pass_separable_cache" },
+                    .{ "color_targets[10]", "color_targets[13]", "color_targets[12]", "cache", null, "comp_1pass_separable_cache" },
+                },
+            },
+        },
+
+        .{ // Compute naive convolution filter chain, row-major
+            .unroll = .{
+                .template = "compute_filter_1pass",
+                .args = .{
+                    // TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT, FILTER, FILTER_PARAM, CONDITION
+                    .{ "color_targets[2]", "color_targets[5]", "color_targets[4]", "cache", "row_major", "comp_1pass_separable_row_major" },
+                    .{ "color_targets[4]", "color_targets[7]", "color_targets[6]", "cache", "row_major", "comp_1pass_separable_row_major" },
+                    .{ "color_targets[6]", "color_targets[9]", "color_targets[8]", "cache", "row_major", "comp_1pass_separable_row_major" },
+                    .{ "color_targets[8]", "color_targets[11]", "color_targets[10]", "cache", "row_major", "comp_1pass_separable_row_major" },
+                    .{ "color_targets[10]", "color_targets[13]", "color_targets[12]", "cache", "row_major", "comp_1pass_separable_row_major" },
                 },
             },
         },
@@ -493,6 +508,7 @@
                     "comp_2pass_separable",
                     "comp_2pass_separable_cache",
                     "comp_1pass_separable_cache",
+                    "comp_1pass_separable_row_major",
                     "frag_naive",
                     "frag_2pass_separable",
                     "frag_3pass_separable",

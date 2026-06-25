@@ -119,13 +119,14 @@ void main() {
 #endif // CACHE and (HORIZONTAL or VERTICAL)
 
 #if defined(CACHE) && !(defined(HORIZONTAL) || defined(VERTICAL))
-#if (DIM_X != DIM_Y || DIM_Z != 1)
-#error "This shader must be compiled for a square workgroup"
-#endif
+const int cache_cols = DIM_X;
+const int cache_rows = DIM_Y + M * 2;
 
-const int cache_s = DIM_Y;
-const int cache_l = DIM_X + M * 2;
-shared vec4 cache[cache_s][cache_l];
+#if defined(ROW_MAJOR)
+shared vec4 cache[cache_rows][cache_cols];
+#else
+shared vec4 cache[cache_cols][cache_rows];
+#endif
 
 void main() {
     const ivec2 group_base = ivec2(gl_WorkGroupID.xy) * DIM_X;
@@ -133,8 +134,8 @@ void main() {
     const ivec2 texel_coord = ivec2(gl_GlobalInvocationID.xy);
     const ivec2 img_size = textureSize(in_texture, 0);
 
-    for (int col = group_coord.x; col < cache_s; col += DIM_X) {
-        for (int row = group_coord.y; row < cache_l; row += DIM_Y) {
+    for (int row = group_coord.y; row < cache_rows; row += DIM_Y) {
+        for (int col = group_coord.x; col < cache_cols; col += DIM_X) {
             vec4 sum = vec4(0.0);
 
             for (int i = 0; i < N; i++) {
@@ -142,7 +143,11 @@ void main() {
                 sample_coord = clamp(sample_coord, ivec2(0, 0), img_size - 1);
                 sum += kernel_gaussian[abs(i - M)] * texelFetch(in_texture, sample_coord, 0);
             }
+            #if defined(ROW_MAJOR)
+            cache[row][col] = sum;
+            #else
             cache[col][row] = sum;
+            #endif
         }
     }
     barrier();
@@ -150,7 +155,13 @@ void main() {
     vec4 sum = vec4(0.0);
 
     for (int i = 0; i < N; i++) {
-        sum += kernel_gaussian[abs(i - M)] * cache[group_coord.x][group_coord.y + i];
+        #if defined(ROW_MAJOR)
+        vec4 val = cache[group_coord.y + i][group_coord.x];
+        #else
+        vec4 val = cache[group_coord.x][group_coord.y + i];
+        #endif
+
+        sum += kernel_gaussian[abs(i - M)] * val;
     }
 
     imageStore(out_texture, texel_coord, sum);
