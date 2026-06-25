@@ -123,13 +123,37 @@ void main() {
 #error "This shader must be compiled for a square workgroup"
 #endif
 
-const int cache_s = DIM_Y + M * 2;
+const int cache_s = DIM_Y;
 const int cache_l = DIM_X + M * 2;
 shared vec4 cache[cache_s][cache_l];
 
 void main() {
+    const ivec2 group_base = ivec2(gl_WorkGroupID.xy) * DIM_X;
+    const ivec2 group_coord = ivec2(gl_LocalInvocationID.xy);
     const ivec2 texel_coord = ivec2(gl_GlobalInvocationID.xy);
-    imageStore(out_texture, texel_coord, vec4(1.0));
+    const ivec2 img_size = textureSize(in_texture, 0);
+
+    for (int col = group_coord.x; col < cache_s; col += DIM_X) {
+        for (int row = group_coord.y; row < cache_l; row += DIM_Y) {
+            vec4 sum = vec4(0.0);
+
+            for (int i = 0; i < N; i++) {
+                ivec2 sample_coord = group_base + ivec2(col + i, row) - M;
+                sample_coord = clamp(sample_coord, ivec2(0, 0), img_size - 1);
+                sum += kernel_gaussian[abs(i - M)] * texelFetch(in_texture, sample_coord, 0);
+            }
+            cache[col][row] = sum;
+        }
+    }
+    barrier();
+
+    vec4 sum = vec4(0.0);
+
+    for (int i = 0; i < N; i++) {
+        sum += kernel_gaussian[abs(i - M)] * cache[group_coord.x][group_coord.y + i];
+    }
+
+    imageStore(out_texture, texel_coord, sum);
 }
 #endif // CACHE and NOT (HORIZONTAL or VERTICAL)
 #endif // COMPUTE
