@@ -152,6 +152,10 @@ void main() {
     }
     barrier();
 
+    if (texel_coord.x >= img_size.x || texel_coord.y >= img_size.y) {
+        return;
+    }
+
     vec4 sum = vec4(0.0);
 
     for (int i = 0; i < N; i++) {
