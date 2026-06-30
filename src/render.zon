@@ -289,7 +289,7 @@
             },
             .passes = .{
                 .{ .render = .{
-                    .require_all_tags = .{"frag_3pass_separable"},
+                    .require_all_tags = .{"frag_2pass_separable_downsample"},
                     .drawcalls = .{.{
                         .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
                             .file = "bloom.glsl",
@@ -302,7 +302,7 @@
                     .color_targets = .{.{ .texture = "TEXTURE_OUT" }},
                 } },
                 .{ .render = .{
-                    .require_all_tags = .{"frag_3pass_separable"},
+                    .require_all_tags = .{"frag_2pass_separable_downsample"},
                     .drawcalls = .{.{
                         .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
                             .file = "bloom.glsl",
@@ -315,7 +315,7 @@
                     .color_targets = .{.{ .texture = "TEXTURE_MID" }},
                 } },
                 .{ .render = .{
-                    .require_all_tags = .{"frag_3pass_separable"},
+                    .require_all_tags = .{"frag_2pass_separable_downsample"},
                     .drawcalls = .{.{
                         .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
                             .file = "bloom.glsl",
@@ -414,18 +414,6 @@
             },
         },
 
-        // .{ // Impulse image
-        //     .render = .{
-        //         .drawcalls = .{.{
-        //             .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
-        //                 .file = "shaders.glsl",
-        //                 .params = .{ "point_image", "point_value=1000" },
-        //             } } } }},
-        //         }},
-        //         .color_targets = .{.{ .texture = "color_targets[2]" }},
-        //     },
-        // },
-
         .{ // Bloom prefilter
             .render = .{
                 .drawcalls = .{.{
@@ -440,6 +428,18 @@
                 .color_targets = .{.{ .texture = "color_targets[2]" }},
             },
         },
+
+        // .{ // Impulse image for testing
+        //     .render = .{
+        //         .drawcalls = .{.{
+        //             .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+        //                 .file = "shaders.glsl",
+        //                 .params = .{ "point_image", "point_value=1000" },
+        //             } } } }},
+        //         }},
+        //         .color_targets = .{.{ .texture = "color_targets[2]" }},
+        //     },
+        // },
 
         .{ // Compute naive convolution filter chain
             .unroll = .{
@@ -483,7 +483,7 @@
             },
         },
 
-        .{ // Compute 2-pass separable convolution filter chain with shared memory caching
+        .{ // Compute 2-pass separable convolution filter chain with shared memory caching, 1D dispatch
             .unroll = .{
                 .template = "compute_filter_2pass_1d",
                 .args = .{
@@ -497,21 +497,21 @@
             },
         },
 
-        .{ // Compute naive convolution filter chain
+        .{ // Compute separable convolution filter chain, shared memory for the intermediate
             .unroll = .{
                 .template = "compute_filter_1pass",
                 .args = .{
                     // TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT, FILTER, FILTER_PARAM, CONDITION
-                    .{ "color_targets[2]", "color_targets[5]", "color_targets[4]", "cache", null, "comp_1pass_separable_cache" },
-                    .{ "color_targets[4]", "color_targets[7]", "color_targets[6]", "cache", null, "comp_1pass_separable_cache" },
-                    .{ "color_targets[6]", "color_targets[9]", "color_targets[8]", "cache", null, "comp_1pass_separable_cache" },
-                    .{ "color_targets[8]", "color_targets[11]", "color_targets[10]", "cache", null, "comp_1pass_separable_cache" },
-                    .{ "color_targets[10]", "color_targets[13]", "color_targets[12]", "cache", null, "comp_1pass_separable_cache" },
+                    .{ "color_targets[2]", "color_targets[5]", "color_targets[4]", "cache", null, "comp_1pass_separable" },
+                    .{ "color_targets[4]", "color_targets[7]", "color_targets[6]", "cache", null, "comp_1pass_separable" },
+                    .{ "color_targets[6]", "color_targets[9]", "color_targets[8]", "cache", null, "comp_1pass_separable" },
+                    .{ "color_targets[8]", "color_targets[11]", "color_targets[10]", "cache", null, "comp_1pass_separable" },
+                    .{ "color_targets[10]", "color_targets[13]", "color_targets[12]", "cache", null, "comp_1pass_separable" },
                 },
             },
         },
 
-        .{ // Compute naive convolution filter chain, row-major
+        .{ // Compute separable convolution filter chain, shared memory for the intermediate, row-major
             .unroll = .{
                 .template = "compute_filter_1pass",
                 .args = .{
@@ -553,7 +553,7 @@
             },
         },
 
-        .{ // Fragment 3-pass separable convolution filter chain
+        .{ // Fragment 2-pass separable convolution filter chain with discrete downsample
             .unroll = .{
                 .template = "fragment_filter_3pass",
                 .args = .{
@@ -574,11 +574,11 @@
                     "comp_2pass_separable",
                     "comp_2pass_separable_cache",
                     "comp_2pass_separable_cache_1d",
-                    "comp_1pass_separable_cache",
+                    "comp_1pass_separable",
                     "comp_1pass_separable_row_major",
                     "frag_naive",
                     "frag_2pass_separable",
-                    "frag_3pass_separable",
+                    "frag_2pass_separable_downsample",
                 },
                 .drawcalls = .{.{
                     .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
