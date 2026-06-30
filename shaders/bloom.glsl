@@ -66,14 +66,14 @@ void main() {
 }
 #endif // NOT CACHE and (HORIZONTAL or VERTICAL)
 
-#if defined(CACHE) && (defined(HORIZONTAL) || defined(VERTICAL))
+#if defined(CACHE) && !defined(_1D) && (defined(HORIZONTAL) || defined(VERTICAL))
 #if (DIM_X != DIM_Y || DIM_Z != 1)
 #error "This shader must be compiled for a square workgroup"
 #endif
 
 const int cache_s = DIM_Y;
 const int cache_l = DIM_X + M * 2;
-shared vec4 cache[cache_s][cache_l];
+shared vec4 cache[cache_s][cache_l | 1];
 
 void main() {
     const ivec2 texel_coord = ivec2(gl_GlobalInvocationID.xy);
@@ -116,7 +116,46 @@ void main() {
 
     imageStore(out_texture, texel_coord, sum);
 }
-#endif // CACHE and (HORIZONTAL or VERTICAL)
+#endif // CACHE and NOT _1D and (HORIZONTAL or VERTICAL)
+
+#if defined(CACHE) && defined(_1D) && (defined(HORIZONTAL) || defined(VERTICAL))
+#if defined(HORIZONTAL)
+const int LEN = DIM_X;
+#else
+const int LEN = DIM_Y;
+#endif
+
+const int cache_l = LEN + M * 2;
+shared vec4 cache[cache_l];
+
+void main() {
+    const ivec2 texel_coord = ivec2(gl_GlobalInvocationID.xy);
+    const ivec2 img_size = textureSize(in_texture, 0);
+
+    for (int i = int(gl_LocalInvocationIndex); i < cache_l; i += LEN) {
+        #if defined(HORIZONTAL)
+        ivec2 sample_coord = ivec2(gl_WorkGroupID.x * DIM_X + i - M, texel_coord.y);
+        #else
+        ivec2 sample_coord = ivec2(texel_coord.x, gl_WorkGroupID.y * DIM_Y + i - M);
+        #endif
+        sample_coord = clamp(sample_coord, ivec2(0, 0), img_size - 1);
+        cache[i] = texelFetch(in_texture, sample_coord, 0);
+    }
+    barrier();
+
+    if (texel_coord.x >= img_size.x || texel_coord.y >= img_size.y) {
+        return;
+    }
+
+    vec4 sum = vec4(0.0);
+
+    for (int i = 0; i < N; i++) {
+        sum += kernel_gaussian[abs(i - M)] * cache[gl_LocalInvocationIndex + i];
+    }
+
+    imageStore(out_texture, texel_coord, sum);
+}
+#endif // CACHE and _1D and (HORIZONTAL or VERTICAL)
 
 #if defined(CACHE) && !(defined(HORIZONTAL) || defined(VERTICAL))
 const int cache_cols = DIM_X;
@@ -329,7 +368,7 @@ void main() {
     sum += texture(u_input_texture, in_uv + vec2(1.0, 1.0) * t) * 2.0;
     sum += texture(u_input_texture, in_uv + vec2(-1.0, -1.0) * t) * 2.0;
     sum += texture(u_input_texture, in_uv + vec2(1.0, -1.0) * t) * 2.0;
-    #elif defined(BJORGE) &&  defined(DOWN)
+    #elif defined(BJORGE) && defined(DOWN)
     const float weight = 1.0 / 8.0;
     sum += texture(u_input_texture, in_uv) * 4.0;
     sum += texture(u_input_texture, in_uv + vec2(-1.0, -1.0) * t);
@@ -364,7 +403,7 @@ void main() {
     sum += texture(u_input_texture, in_uv + vec2(-1.0, -1.0) * t) * 4.0;
     sum += texture(u_input_texture, in_uv + vec2(1.0, -1.0) * t) * 4.0;
     #else
-    #error "Either UP or DOWN must be defined"
+    #error "Either BJORGE or JIMENEZ and UP or DOWN must be defined"
     #endif // UP elif DOWN
 
     out_color = sum * weight;

@@ -122,6 +122,58 @@
             },
         },
 
+        .{ // Compute separable convolution, 1d dispatch
+            .name = "compute_filter_2pass_1d",
+            .params = .{
+                .{ .name = "TEXTURE_IN" },
+                .{ .name = "TEXTURE_MID" },
+                .{ .name = "TEXTURE_OUT" },
+                .{ .name = "FILTER_PARAM" },
+                .{ .name = "CONDITION" },
+            },
+            .passes = .{
+                .{ .render = .{
+                    .require_all_tags = .{"CONDITION"},
+                    .drawcalls = .{.{
+                        .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                            .file = "bloom.glsl",
+                            .params = .{"sample"},
+                        } } } }},
+                        .fragment_samplers = .{
+                            .{ .texture = "TEXTURE_IN", .sampler = "linear" },
+                        },
+                    }},
+                    .color_targets = .{.{ .texture = "TEXTURE_OUT" }},
+                } },
+                .{ .compute = .{
+                    .require_all_tags = .{"CONDITION"},
+                    .dispatches = .{.{
+                        .comp = .{
+                            .file = "bloom.glsl",
+                            .params = .{ "horizontal", "_1d", "FILTER_PARAM" },
+                        },
+                        .threads = .{ .x = 64 },
+                        .groups = .{ .p = .{ .texture_size = "TEXTURE_MID" }, .q = .threads },
+                        .readonly_storage_textures = .{"TEXTURE_OUT"},
+                    }},
+                    .readwrite_storage_textures = .{.{ .texture = "TEXTURE_MID" }},
+                } },
+                .{ .compute = .{
+                    .require_all_tags = .{"CONDITION"},
+                    .dispatches = .{.{
+                        .comp = .{
+                            .file = "bloom.glsl",
+                            .params = .{ "vertical", "_1d", "FILTER_PARAM" },
+                        },
+                        .threads = .{ .x = 1, .y = 64 },
+                        .groups = .{ .p = .{ .texture_size = "TEXTURE_OUT" }, .q = .threads },
+                        .readonly_storage_textures = .{"TEXTURE_MID"},
+                    }},
+                    .readwrite_storage_textures = .{.{ .texture = "TEXTURE_OUT" }},
+                } },
+            },
+        },
+
         .{ // Fragment naive convolution
             .name = "fragment_filter_1pass",
             .params = .{
@@ -431,6 +483,20 @@
             },
         },
 
+        .{ // Compute 2-pass separable convolution filter chain with shared memory caching
+            .unroll = .{
+                .template = "compute_filter_2pass_1d",
+                .args = .{
+                    // TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT, FILTER_PARAM, CONDITION
+                    .{ "color_targets[2]", "color_targets[5]", "color_targets[4]", "cache", "comp_2pass_separable_cache_1d" },
+                    .{ "color_targets[4]", "color_targets[7]", "color_targets[6]", "cache", "comp_2pass_separable_cache_1d" },
+                    .{ "color_targets[6]", "color_targets[9]", "color_targets[8]", "cache", "comp_2pass_separable_cache_1d" },
+                    .{ "color_targets[8]", "color_targets[11]", "color_targets[10]", "cache", "comp_2pass_separable_cache_1d" },
+                    .{ "color_targets[10]", "color_targets[13]", "color_targets[12]", "cache", "comp_2pass_separable_cache_1d" },
+                },
+            },
+        },
+
         .{ // Compute naive convolution filter chain
             .unroll = .{
                 .template = "compute_filter_1pass",
@@ -507,6 +573,7 @@
                     "comp_naive",
                     "comp_2pass_separable",
                     "comp_2pass_separable_cache",
+                    "comp_2pass_separable_cache_1d",
                     "comp_1pass_separable_cache",
                     "comp_1pass_separable_row_major",
                     "frag_naive",
