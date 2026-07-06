@@ -19,7 +19,14 @@
         .{ .format = .d16_unorm, .sample_count = .@"4" },
     },
     .samplers = .{
-        .{ .name = "nearest" },
+        .{
+            .name = "nearest",
+            .min_filter = .nearest,
+            .mag_filter = .nearest,
+            .address_mode_u = .clamp_to_edge,
+            .address_mode_v = .clamp_to_edge,
+            .address_mode_w = .clamp_to_edge,
+        },
         .{
             .name = "linear",
             .min_filter = .linear,
