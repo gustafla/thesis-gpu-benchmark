@@ -309,7 +309,7 @@
                             .params = .{"horizontal"},
                         } } } }},
                         .fragment_samplers = .{
-                            .{ .texture = "TEXTURE_OUT", .sampler = "linear" },
+                            .{ .texture = "TEXTURE_OUT", .sampler = "nearest" },
                         },
                     }},
                     .color_targets = .{.{ .texture = "TEXTURE_MID" }},
@@ -322,7 +322,7 @@
                             .params = .{"vertical"},
                         } } } }},
                         .fragment_samplers = .{
-                            .{ .texture = "TEXTURE_MID", .sampler = "linear" },
+                            .{ .texture = "TEXTURE_MID", .sampler = "nearest" },
                         },
                     }},
                     .color_targets = .{.{ .texture = "TEXTURE_OUT" }},
