@@ -34,15 +34,32 @@ pub const anchor = struct {};
 pub const Anchor = std.meta.DeclEnum(anchor);
 
 pub const frame = struct {
+    var screenshot_taken: bool = false;
     pub var state: timeline.State = undefined;
 
-    pub fn update(time: f32) timeline.State {
+    pub fn update(time: f32) engine.FrameState {
         state = timeline.resolve(time);
 
         // Update strings
         util.updateDebugStrings(state, &string.fps, &string.time);
 
-        return state;
+        return .{
+            .timeline_state = state,
+            .request_screenshot = !screenshot_taken,
+        };
+    }
+
+    pub fn screenshot(rgba_src: []const u8) !void {
+        const filename = "screenshot.png";
+        if (c.stbi_write_png(
+            filename,
+            config.main.width,
+            config.main.height,
+            4,
+            rgba_src.ptr,
+            config.main.width * 4,
+        ) == 0) std.log.err("Failed to save {s}", .{filename});
+        screenshot_taken = true;
     }
 };
 
