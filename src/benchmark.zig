@@ -136,6 +136,10 @@ fn processSuccess(
         }
     }
     file_writer.interface.flush() catch return file_writer.err.?;
+
+    // Install the captured PNG into the results directory
+    const png_filename = try std.fmt.allocPrint(arena, "{s}.png", .{tag_name});
+    try std.Io.Dir.cwd().rename("screenshot.png", results_dir, png_filename, io);
 }
 
 fn cleanName(buffer: []u8, name: []const u8) []const u8 {
@@ -181,7 +185,7 @@ const PassDescription = struct {
 
 fn passDescription(buffer: []u8, i: u64, comptime tag: []const u8) PassDescription {
     const passes = comptime filterPasses(unrollPasses(script.config.render), tag);
-    if (i == passes.len) return .{ .name = "final_scaling" };
+    if (i >= passes.len) return .{ .name = "output_processing" };
     const pass = passes[i];
     switch (pass) {
         .render => |rpass| {
