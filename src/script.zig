@@ -45,7 +45,7 @@ pub const frame = struct {
 
         return .{
             .timeline_state = state,
-            .request_screenshot = !screenshot_taken,
+            .request_screenshot = config.main.enable_screenshots and !screenshot_taken,
         };
     }
 
