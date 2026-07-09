@@ -441,7 +441,7 @@
         //         .drawcalls = .{.{
         //             .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
         //                 .file = "shaders.glsl",
-        //                 .params = .{ "point_image", "point_value=1000" },
+        //                 .params = .{ "point_image", "point_value=100000" },
         //             } } } }},
         //         }},
         //         .color_targets = .{.{ .texture = "color_targets[2]" }},
