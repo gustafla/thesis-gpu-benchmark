@@ -9,6 +9,7 @@
         .{ .name = "frag_naive", .duration = 10, .t = .seq },
         .{ .name = "frag_2pass_separable", .duration = 10, .t = .seq },
         .{ .name = "frag_2pass_separable_downsample", .duration = 10, .t = .seq },
+        .{ .name = "frag_2pass_separable_lso", .duration = 10, .t = .seq },
         .{ .name = "frag_dual_bjorge", .duration = 10, .t = .seq },
         .{ .name = "frag_dual_jimenez", .duration = 10, .t = .seq },
         .{ .name = "frag_dense", .duration = 10, .t = .seq },

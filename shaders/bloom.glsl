@@ -292,7 +292,7 @@ void main() {
 }
 #endif // NAIVE
 
-#if defined(HORIZONTAL) || defined(VERTICAL)
+#if !defined(LSO) && (defined(HORIZONTAL) || defined(VERTICAL))
 void main() {
     vec2 t = 1.0 / textureSize(u_input_texture, 0);
     #if defined(PIXEL_SCALE)
@@ -314,7 +314,28 @@ void main() {
 
     out_color = sum;
 }
-#endif // HORIZONTAL or VERTICAL
+#endif // NOT LSO and HORIZONTAL or VERTICAL
+
+#if defined(LSO) && (defined(HORIZONTAL) || defined(VERTICAL))
+void main() {
+    vec2 t = 1.0 / textureSize(u_input_texture, 0);
+    vec4 sum = vec4(0.0);
+
+    for (int i = 0; i < kernel_lso_m * 2 + 1; i++) {
+        int i_minus_m = i - kernel_lso_m;
+        #if defined(HORIZONTAL)
+        vec2 offset = vec2(sign(i_minus_m) * kernel_lso_o_gaussian[abs(i_minus_m)], 0);
+        #else
+        vec2 offset = vec2(0, sign(i_minus_m) * kernel_lso_o_gaussian[abs(i_minus_m)]);
+        #endif
+        vec2 sample_coord = in_uv + t * offset;
+        sum += kernel_lso_w_gaussian[abs(i_minus_m)] *
+                texture(u_input_texture, sample_coord);
+    }
+
+    out_color = sum;
+}
+#endif // LSO and HORIZONTAL or VERTICAL
 
 #if defined(BJORGE) || defined(JIMENEZ)
 void main() {

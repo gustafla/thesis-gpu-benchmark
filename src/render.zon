@@ -337,6 +337,56 @@
             },
         },
 
+        .{ // Fragment separable with LSO
+            .name = "fragment_filter_lso",
+            .params = .{
+                .{ .name = "TEXTURE_IN" },
+                .{ .name = "TEXTURE_MID" },
+                .{ .name = "TEXTURE_OUT" },
+            },
+            .passes = .{
+                .{ .render = .{
+                    .require_all_tags = .{"frag_2pass_separable_lso"},
+                    .drawcalls = .{.{
+                        .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                            .file = "bloom.glsl",
+                            .params = .{"sample"},
+                        } } } }},
+                        .fragment_samplers = .{
+                            .{ .texture = "TEXTURE_IN", .sampler = "linear" },
+                        },
+                    }},
+                    .color_targets = .{.{ .texture = "TEXTURE_OUT" }},
+                } },
+                .{ .render = .{
+                    .require_all_tags = .{"frag_2pass_separable_lso"},
+                    .drawcalls = .{.{
+                        .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                            .file = "bloom.glsl",
+                            .params = .{ "horizontal", "lso" },
+                        } } } }},
+                        .fragment_samplers = .{
+                            .{ .texture = "TEXTURE_OUT", .sampler = "linear" },
+                        },
+                    }},
+                    .color_targets = .{.{ .texture = "TEXTURE_MID" }},
+                } },
+                .{ .render = .{
+                    .require_all_tags = .{"frag_2pass_separable_lso"},
+                    .drawcalls = .{.{
+                        .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                            .file = "bloom.glsl",
+                            .params = .{ "vertical", "lso" },
+                        } } } }},
+                        .fragment_samplers = .{
+                            .{ .texture = "TEXTURE_MID", .sampler = "linear" },
+                        },
+                    }},
+                    .color_targets = .{.{ .texture = "TEXTURE_OUT" }},
+                } },
+            },
+        },
+
         .{ // Fragment dual filter downsampling
             .name = "fragment_dual_filter_downsample",
             .params = .{
@@ -574,6 +624,20 @@
             },
         },
 
+        .{ // Fragment 2-pass separable convolution filter chain with LSO
+            .unroll = .{
+                .template = "fragment_filter_lso",
+                .args = .{
+                    // TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT
+                    .{ "color_targets[2]", "color_targets[5]", "color_targets[4]" },
+                    .{ "color_targets[4]", "color_targets[7]", "color_targets[6]" },
+                    .{ "color_targets[6]", "color_targets[9]", "color_targets[8]" },
+                    .{ "color_targets[8]", "color_targets[11]", "color_targets[10]" },
+                    .{ "color_targets[10]", "color_targets[13]", "color_targets[12]" },
+                },
+            },
+        },
+
         .{ // Convolution chain compositing
             .render = .{
                 .require_any_tags = .{
@@ -586,6 +650,7 @@
                     "frag_naive",
                     "frag_2pass_separable",
                     "frag_2pass_separable_downsample",
+                    "frag_2pass_separable_lso",
                 },
                 .drawcalls = .{.{
                     .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
