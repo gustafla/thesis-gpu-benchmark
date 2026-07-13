@@ -43,24 +43,15 @@ pub const frame = struct {
         // Update strings
         util.updateDebugStrings(state, &string.fps, &string.time);
 
+        const take_screenshot = engine.options.fixed_fps != null or !screenshot_taken;
+        screenshot_taken = true;
         return .{
             .timeline_state = state,
-            .request_screenshot = config.main.enable_screenshots and !screenshot_taken,
+            .request_screenshot = take_screenshot,
         };
     }
 
-    pub fn screenshot(rgba_src: []const u8) !void {
-        const filename = "screenshot.png";
-        if (c.stbi_write_png(
-            filename,
-            config.main.width,
-            config.main.height,
-            4,
-            rgba_src.ptr,
-            config.main.width * 4,
-        ) == 0) std.log.err("Failed to save {s}", .{filename});
-        screenshot_taken = true;
-    }
+    pub const screenshot = util.capturePNG;
 };
 
 pub const texture = struct {

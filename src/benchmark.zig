@@ -138,10 +138,8 @@ fn processSuccess(
     file_writer.interface.flush() catch return file_writer.err.?;
 
     // Install the captured PNG into the results directory
-    if (script.config.main.enable_screenshots) {
-        const png_filename = try std.fmt.allocPrint(arena, "{s}.png", .{tag_name});
-        try std.Io.Dir.cwd().rename("screenshot.png", results_dir, png_filename, io);
-    }
+    const png_filename = try std.fmt.allocPrint(arena, "{s}.png", .{tag_name});
+    try std.Io.Dir.cwd().rename("frame0.png", results_dir, png_filename, io);
 }
 
 fn cleanName(buffer: []u8, name: []const u8) []const u8 {
