@@ -6,6 +6,7 @@
         .{ .name = "comp_2pass_separable_cache_1d", .duration = 10, .t = .seq },
         .{ .name = "comp_1pass_separable", .duration = 10, .t = .seq },
         .{ .name = "comp_1pass_separable_row_major", .duration = 10, .t = .seq },
+        .{ .name = "comp_1pass_separable_lso", .duration = 10, .t = .seq },
         .{ .name = "frag_naive", .duration = 10, .t = .seq },
         .{ .name = "frag_2pass_separable", .duration = 10, .t = .seq },
         .{ .name = "frag_2pass_separable_downsample", .duration = 10, .t = .seq },

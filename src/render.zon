@@ -77,6 +77,43 @@
             },
         },
 
+        .{ // Compute 1-pass, LSO
+            .name = "compute_filter_1pass_lso",
+            .params = .{
+                .{ .name = "TEXTURE_IN" },
+                .{ .name = "TEXTURE_MID" },
+                .{ .name = "TEXTURE_OUT" },
+            },
+            .passes = .{
+                .{ .render = .{
+                    .require_all_tags = .{"comp_1pass_separable_lso"},
+                    .drawcalls = .{.{
+                        .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                            .file = "bloom.glsl",
+                            .params = .{"sample"},
+                        } } } }},
+                        .fragment_samplers = .{
+                            .{ .texture = "TEXTURE_IN", .sampler = "linear" },
+                        },
+                    }},
+                    .color_targets = .{.{ .texture = "TEXTURE_MID" }},
+                } },
+                .{ .compute = .{
+                    .require_all_tags = .{"comp_1pass_separable_lso"},
+                    .dispatches = .{.{
+                        .comp = .{
+                            .file = "bloom.glsl",
+                            .params = .{ "cache", "lso" },
+                        },
+                        .threads = .{ .x = 8, .y = 8 },
+                        .groups = .{ .p = .{ .texture_size = "TEXTURE_OUT" }, .q = .threads },
+                        .samplers = .{.{ .texture = "TEXTURE_MID", .sampler = "linear" }},
+                    }},
+                    .readwrite_storage_textures = .{.{ .texture = "TEXTURE_OUT" }},
+                } },
+            },
+        },
+
         .{ // Compute separable convolution
             .name = "compute_filter_2pass",
             .params = .{
@@ -582,6 +619,20 @@
             },
         },
 
+        .{ // Compute separable convolution filter chain, shared memory for the intermediate, row-major, LSO
+            .unroll = .{
+                .template = "compute_filter_1pass_lso",
+                .args = .{
+                    // TEXTURE_IN, TEXTURE_MID, TEXTURE_OUT
+                    .{ "color_targets[2]", "color_targets[5]", "color_targets[4]" },
+                    .{ "color_targets[4]", "color_targets[7]", "color_targets[6]" },
+                    .{ "color_targets[6]", "color_targets[9]", "color_targets[8]" },
+                    .{ "color_targets[8]", "color_targets[11]", "color_targets[10]" },
+                    .{ "color_targets[10]", "color_targets[13]", "color_targets[12]" },
+                },
+            },
+        },
+
         .{ // Fragment naive convolution filter chain
             .unroll = .{
                 .template = "fragment_filter_1pass",
@@ -647,6 +698,7 @@
                     "comp_2pass_separable_cache_1d",
                     "comp_1pass_separable",
                     "comp_1pass_separable_row_major",
+                    "comp_1pass_separable_lso",
                     "frag_naive",
                     "frag_2pass_separable",
                     "frag_2pass_separable_downsample",

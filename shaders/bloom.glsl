@@ -9,7 +9,11 @@ const int N = M * 2 + 1;
 #if defined(COMPUTE)
 layout(local_size_x = DIM_X, local_size_y = DIM_Y) in;
 
+#if !defined(LSO)
 layout(set = 0, binding = 0) uniform texture2D in_texture;
+#else
+layout(set = 0, binding = 0) uniform sampler2D in_texture;
+#endif
 layout(set = 1, binding = 0, rgba16f) writeonly uniform image2D out_texture;
 
 #if !defined(CACHE) && defined(NAIVE)
@@ -157,7 +161,7 @@ void main() {
 }
 #endif // CACHE and _1D and (HORIZONTAL or VERTICAL)
 
-#if defined(CACHE) && !(defined(HORIZONTAL) || defined(VERTICAL))
+#if defined(CACHE) && !defined(LSO) && !(defined(HORIZONTAL) || defined(VERTICAL))
 const int cache_cols = DIM_X;
 const int cache_rows = DIM_Y + M * 2;
 
@@ -209,7 +213,54 @@ void main() {
 
     imageStore(out_texture, texel_coord, sum);
 }
-#endif // CACHE and NOT (HORIZONTAL or VERTICAL)
+#endif // CACHE and NOT LSO and NOT (HORIZONTAL or VERTICAL)
+
+#if defined(CACHE) && defined(LSO) && !(defined(HORIZONTAL) || defined(VERTICAL))
+const int cache_cols = DIM_X;
+const int cache_rows = DIM_Y + M * 2;
+
+shared vec4 cache[cache_rows][cache_cols];
+
+void main() {
+    const ivec2 group_base = ivec2(gl_WorkGroupID.xy) * DIM_X;
+    const ivec2 group_coord = ivec2(gl_LocalInvocationID.xy);
+    const ivec2 texel_coord = ivec2(gl_GlobalInvocationID.xy);
+    const ivec2 img_size = textureSize(in_texture, 0);
+    const vec2 t = 1.0 / vec2(img_size);
+
+    for (int row = group_coord.y; row < cache_rows; row += DIM_Y) {
+        for (int col = group_coord.x; col < cache_cols; col += DIM_X) {
+            ivec2 center = group_base + ivec2(col, row - M);
+            vec2 uv = (vec2(center) + 0.5) / vec2(img_size);
+
+            vec4 sum = vec4(0.0);
+
+            for (int i = 0; i < kernel_lso_m * 2 + 1; i++) {
+                int i_minus_m = i - kernel_lso_m;
+                vec2 offset = vec2(sign(i_minus_m) * kernel_lso_o_gaussian[abs(i_minus_m)], 0);
+                vec2 sample_coord = uv + t * offset;
+                sum += kernel_lso_w_gaussian[abs(i_minus_m)] * texture(in_texture, sample_coord);
+            }
+
+            cache[row][col] = sum;
+        }
+    }
+    barrier();
+
+    if (texel_coord.x >= img_size.x || texel_coord.y >= img_size.y) {
+        return;
+    }
+
+    vec4 sum = vec4(0.0);
+
+    for (int i = 0; i < N; i++) {
+        vec4 val = cache[group_coord.y + i][group_coord.x];
+        sum += kernel_gaussian[abs(i - M)] * val;
+    }
+
+    imageStore(out_texture, texel_coord, sum);
+}
+#endif // CACHE and LSO and NOT (HORIZONTAL or VERTICAL)
 #endif // COMPUTE
 
 #if defined(FRAGMENT)
