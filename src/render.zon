@@ -486,8 +486,35 @@
         },
     },
     .passes = .{
+        .{ // Impulse image for testing
+            .render = .{
+                .require_all_tags = .{"test_impulse"},
+                .drawcalls = .{.{
+                    .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                        .file = "shaders.glsl",
+                        .params = .{ "point_image", "point_value=100000" },
+                    } } } }},
+                }},
+                .color_targets = .{.{ .texture = "color_targets[2]" }},
+            },
+        },
+
+        .{ // Dynamic image for testing
+            .render = .{
+                .require_all_tags = .{"test_motion"},
+                .drawcalls = .{.{
+                    .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
+                        .file = "shaders.glsl",
+                        .params = .{ "moving_point", "point_value=100" },
+                    } } } }},
+                }},
+                .color_targets = .{.{ .texture = "color_targets[2]" }},
+            },
+        },
+
         .{ // Main render pass
             .render = .{
+                .require_all_tags = .{"test_cubes"},
                 .drawcalls = .{
                     .{
                         .pipelines = .{.{
@@ -512,6 +539,7 @@
 
         .{ // Bloom prefilter
             .render = .{
+                .require_all_tags = .{"test_cubes"},
                 .drawcalls = .{.{
                     .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
                         .file = "bloom.glsl",
@@ -524,18 +552,6 @@
                 .color_targets = .{.{ .texture = "color_targets[2]" }},
             },
         },
-
-        // .{ // Impulse image for testing
-        //     .render = .{
-        //         .drawcalls = .{.{
-        //             .pipelines = .{.{ .shader = .{ .stages = .{ .frag = .{
-        //                 .file = "shaders.glsl",
-        //                 .params = .{ "point_image", "point_value=100000" },
-        //             } } } }},
-        //         }},
-        //         .color_targets = .{.{ .texture = "color_targets[2]" }},
-        //     },
-        // },
 
         .{ // Compute naive convolution filter chain
             .unroll = .{

@@ -105,7 +105,7 @@ void main() {
 }
 #endif // FRAGMENT and POINT_IMAGE
 
-#if defined(FRAGMENT) && defined(POINT_IMAGE2)
+#if defined(FRAGMENT) && defined(MOVING_POINT)
 in vec4 gl_FragCoord;
 
 layout(location = 0) out vec4 out_color;
@@ -113,7 +113,8 @@ layout(location = 0) out vec4 out_color;
 #include <color.glsl>
 
 void main() {
-    if (length(gl_FragCoord) < 16.0) {
+    vec2 position = vec2(300 * u_time, 540 + sin(u_time * 5) * 100);
+    if (length(gl_FragCoord.xy - position) < 16.0) {
         out_color = vec4(POINT_VALUE);
     } else {
         out_color = vec4(vec3(0.0), 1.0);

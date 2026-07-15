@@ -1,5 +1,6 @@
 .{
     .tags = .{
+        // Techniques
         .{ .name = "comp_naive", .duration = 10, .t = .seq },
         .{ .name = "comp_2pass_separable", .duration = 10, .t = .seq },
         .{ .name = "comp_2pass_separable_cache", .duration = 10, .t = .seq },
@@ -15,6 +16,11 @@
         .{ .name = "frag_dual_jimenez", .duration = 10, .t = .seq },
         .{ .name = "frag_dense", .duration = 10, .t = .seq },
         .{ .name = "frag_dense_lso", .duration = 10, .t = .seq },
+
+        // Tests
+        .{ .name = "test_cubes", .duration = 1000, .t = .{ .abs = 0 } },
+        .{ .name = "test_impulse", .duration = 1000, .t = .{ .abs = 0 } },
+        .{ .name = "test_motion", .duration = 1000, .t = .{ .abs = 0 } },
     },
     .text = .{
         .fonts = .{.{
