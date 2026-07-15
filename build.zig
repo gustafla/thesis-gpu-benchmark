@@ -60,6 +60,9 @@ pub fn build(b: *std.Build) !void {
     });
     b.installArtifact(benchmark_exe);
 
+    // Sysinfo script
+    b.installBinFile("src/sysinfo.sh", "sysinfo.sh");
+
     // Benchmark runner run step
     const benchmark_run = b.addRunArtifact(benchmark_exe);
     benchmark_run.setCwd(.{ .cwd_relative = b.exe_dir });
