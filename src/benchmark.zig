@@ -17,6 +17,7 @@ pub fn main(init: std.process.Init) !void {
     const results_path = args.next() orelse return error.NoResultsPathArg;
     const run_seconds = if (args.next()) |arg| try std.fmt.parseFloat(f64, arg) else null;
     const warmup_seconds = if (args.next()) |arg| try std.fmt.parseFloat(f64, arg) else 5;
+    const test_tag = args.next() orelse "test_cubes";
 
     const results_dir = try Io.Dir.cwd().createDirPathOpen(io, results_path, .{});
     defer results_dir.close(io);
@@ -27,13 +28,9 @@ pub fn main(init: std.process.Init) !void {
             .argv = &.{
                 exe_path,
                 "--tags-override",
-                tag.name,
+                try std.fmt.allocPrint(arena, "{s},{s}", .{ test_tag, tag.name }),
                 "--duration-override",
-                try std.fmt.allocPrint(
-                    arena,
-                    "{}",
-                    .{(run_seconds orelse tag.duration) + warmup_seconds},
-                ),
+                try std.fmt.allocPrint(arena, "{}", .{(run_seconds orelse tag.duration) + warmup_seconds}),
             },
         });
 
@@ -137,9 +134,18 @@ fn processSuccess(
     }
     file_writer.interface.flush() catch return file_writer.err.?;
 
-    // Install the captured PNG into the results directory
-    const png_filename = try std.fmt.allocPrint(arena, "{s}.png", .{tag_name});
-    try std.Io.Dir.cwd().rename("frame0.png", results_dir, png_filename, io);
+    // Install the captured PNGs into the results directory
+    const frame_dir = try std.fmt.allocPrint(arena, "capture_{s}", .{tag_name});
+    results_dir.deleteTree(io, frame_dir) catch {};
+    try results_dir.createDir(io, frame_dir, .default_dir);
+    var i: u64 = 0;
+    while (true) : (i += 1) {
+        const frame_file = try std.fmt.allocPrint(arena, "frame{}.png", .{i});
+        const frame_subpath = try std.fs.path.join(arena, &.{ frame_dir, frame_file });
+        std.Io.Dir.cwd().access(io, frame_file, .{}) catch |e|
+            if (e == std.Io.Dir.AccessError.FileNotFound) break else return e;
+        try std.Io.Dir.cwd().rename(frame_file, results_dir, frame_subpath, io);
+    }
 }
 
 fn cleanName(buffer: []u8, name: []const u8) []const u8 {

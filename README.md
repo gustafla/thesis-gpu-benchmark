@@ -88,11 +88,12 @@ i.e. don't forget to run `zig build` with the intended `-Doptimize` and `-Dtarge
 This subsection documents the binaries emitted by `zig build`.
 If you intend to run the benchmark on the same host as the build process, you can ignore this subsection and just use the `zig build` commands documented above.
 
-The `benchmark` binary requires two positional arguments and additionally has two optional arguments.
+The `benchmark` binary requires two positional arguments and additionally has three optional arguments.
 1. Demo binary path (relative or absolute, use "./"-prefix if in the working directory).
 2. CSV results output path (relative or absolute).
 3. Run duration (in seconds, default = 10).
 4. Warm-up duration override (in seconds, default = 5).
+5. Test image (`test_impulse`, `test_motion` or `test_cubes`, default = `test_cubes`).
 ```bash
 cd zig-out/bin
 # Run the benchmark for 30 seconds with a 2 second warm-up, output CSVs to /mnt/results
