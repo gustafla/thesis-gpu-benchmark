@@ -89,11 +89,15 @@ fi
 WLROOTS_VER=$(clean_ver "$RAW_WLROOTS")
 [ -z "$WLROOTS_VER" ] && WLROOTS_VER="Not Found"
 
+# CPU governor
+CPU_GOV=$(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor | head  -n 1)
+
 # Output as CSV to stdout
 echo "Component,Version"
-echo "Kernel,$KERNEL_VER"
+echo "Linux,$KERNEL_VER"
 echo "glibc,$GLIBC_VER"
 echo "Mesa,$MESA_VER"
-echo "Vulkan Driver,$VK_DRIVER"
 echo "wlroots,$WLROOTS_VER"
 echo "Compositor,$COMPOSITOR"
+echo "Vulkan Driver,$VK_DRIVER"
+echo "CPU Governor,$CPU_GOV"
