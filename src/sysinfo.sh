@@ -42,7 +42,7 @@ RAW_VK=$(grep -h "library_path" /usr/share/vulkan/icd.d/*.json 2>/dev/null \
 case "$RAW_VK" in
     radeon)        UMD="RADV" ;;
     broadcom)      UMD="V3DV" ;;
-    panfrost)      UMD="Panfrost" ;;
+    panfrost)      UMD="PanVK" ;;
     *)             UMD="$RAW_VK" ;;
 esac
 [ -z "$UMD" ] && UMD="Unknown"
