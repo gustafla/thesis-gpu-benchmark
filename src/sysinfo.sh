@@ -41,7 +41,7 @@ RAW_VK=$(grep -h "library_path" /usr/share/vulkan/icd.d/*.json 2>/dev/null \
 # Map Mesa's internal filenames to their recognized upstream project names
 case "$RAW_VK" in
     radeon)        UMD="RADV" ;;
-    v3dv)          UMD="V3D" ;;
+    broadcom)      UMD="V3DV" ;;
     panfrost)      UMD="Panfrost" ;;
     *)             UMD="$RAW_VK" ;;
 esac
